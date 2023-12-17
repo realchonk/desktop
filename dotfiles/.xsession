@@ -11,4 +11,6 @@ bedstatus &
 xbgcd &
 xidle -delay 900 -timeout 900 -program /usr/local/bin/slock &
 
+pkill xconsole
+
 exec dwm
