@@ -1,4 +1,4 @@
 #!/bin/sh
 
-setxkbmap de us
+setxkbmap -option caps:none de us
 xmodmap -e 'keycode 66 = Escape'
