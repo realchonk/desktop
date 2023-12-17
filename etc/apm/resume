@@ -1,0 +1,5 @@
+#!/bin/sh
+rcctl reload sndiod
+rcctl start obsdfreqd
+sndioctl output.mute=1
+sndioctl output.level=0.5

@@ -20,8 +20,9 @@ clean:
 	rm -rf bin
 
 install:
-	mkdir -p ${DESTDIR}${PREFIX}/bin ${DESTDIR}${MANPREFIX}/man1 ${DESTDIR}${SCRIPTDIR}
+	mkdir -p ${DESTDIR}${PREFIX}/bin ${DESTDIR}${MANPREFIX}/man1 ${DESTDIR}${SCRIPTDIR} ${DESTDIR}/etc
 	cp -f bin/* ${DESTDIR}${PREFIX}/bin/
+	cp -rf etc/* ${DESTDIR}/etc/
 	for f in scripts/*; do										\
 		sed 's#@PREFIX@#${PREFIX}#g; s#@SCRIPTS@#${SCRIPTDIR}#' < $$f 				\
 		> ${DESTDIR}${SCRIPTDIR}/$$(basename $$f);						\
@@ -30,6 +31,9 @@ install:
 	for f in ${MAN}; do										\
 		sed 's/VERSION/${VERSION}/g' < $$f > ${DESTDIR}${MANPREFIX}/man1/$$(basename "$$f");	\
 	done
+
+install-user:
+	cp -rf dotfiles/{,.}* ${HOME}/
 
 bin/dwm: ${SRC_DWM} ${HDR_DWM}
 	@mkdir -p bin

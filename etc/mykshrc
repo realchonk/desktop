@@ -1,0 +1,73 @@
+case "$(command -v vim)" in
+*/vim)		VIM=vim	;;
+*)		VIM=vi	;;
+esac
+
+case "$(command -v colorls)" in
+*/colorls)	LS=colorls	;;
+*)		LS=ls		;;
+esac
+
+case "$(command -v unzip)" in
+*/unzip)	;;
+*)		alias unzip='bsdtar -xf' ;;
+esac
+
+export EDITOR=$VIM
+export FCEDIT=$EDITOR
+export PAGER=less
+export LANG=de_DE.UTF-8
+export LC_CTYPE=en_US.UTF-8
+export CLICOLOR=1
+export CVSROOT=anoncvs@ftp.hostserver.de:/cvs
+HISTFILE=$HOME/.ksh_history
+HISTSIZE=20000
+
+set -o emacs
+
+alias t='mkdir -p /tmp/test && cd /tmp/test'
+alias ls="$LS -Fh"
+alias ll="$LS -Fhl"
+alias la="$LS -AFh"
+alias lla="$LS -AFhl"
+alias dotconfig="git --git-dir=$HOME/.dotfiles --work-tree=$HOME"
+alias imgsz="identify -ping -format '%wx%h\\n'"
+
+if [ "$(id -u)" = 0 ]; then
+	PS1='\[\033[31m\]\h\[\033[0m\]:\[\033[34m\]\w\[\033[31m\]\$\[\033[0m\] '
+else
+	PS1='\[\033[32m\]\u@\h\[\033[0m\]:\[\033[34m\]\w\[\033[31m\]\$\[\033[0m\] '
+fi
+
+# Completions
+if [ -d /var/db/pkg ]; then
+	PKG_LIST=$(command ls -1 /var/db/pkg)
+	set -A complete_pkg_delete -- ${PKG_LIST}
+	set -A complete_pkg_info -- ${PKG_LIST}
+fi
+
+#man() {
+#	[ ${#complete_man} = 0 ] && {
+#		set -A complete_man -- $(command man -k . | grep -o '^[^(]*' | tr ',' '\n' | tr -d ' ' | sort | uniq)
+#	}
+#	command man "$@"
+#}
+
+set -A complete_rcctl_1 -- configtest check reload restart stop start status disable enable ls
+set -A complete_rcctl_2 -- $(rcctl ls all)
+set -A complete_vmctl_1 -- console create pause reload start status stop unpause wait
+set -A complete_vmctl -- $(vmctl status | awk '!/NAME/{print $NF}')
+set -A complete_git_1 -- clone init add mv restore rm bisect diff show status branch commit merge rebase reset tag fetch pull push
+COMMANDS=$(command ls -1 -- $(echo "$PATH" | tr ':' '\n') | sort | uniq)
+set -A complete_doas_1 -- ${COMMANDS}
+set -A complete_which -- ${COMMANDS}
+set -A complete_exec -- ${COMMANDS}
+set -A complete_ifconfig_1 -- $(ifconfig | grep -o '^[a-z0-9]*')
+set -A complete_ifconfig -- up down join nwid wpakey autoconf -inet -inet6
+set -A complete_pass_1 -- show generate ls edit git rm cp mv
+set -A complete_pass -- $(cd $HOME/.password-store && find . -type f -name '*.gpg' | sed 's/^\.\///; s/\.gpg$//')
+
+
+alias pman='man -M /usr/local/share/doc/posix/man'
+alias papropos='apropos -M /usr/local/share/doc/posix/man'
+alias pwhatis='whatis -M /usr/local/share/doc/posix/man'
