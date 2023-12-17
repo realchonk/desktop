@@ -2,10 +2,10 @@
 - surf
 - tabbed
 - nsxiv
-- pinentry-dmenu (https://github.com/ritze/pinentry-dmenu)
 
 # Fix
 - dwm: XKeycodeToKeysum
+- pinentry-dmenu: strcpy() -> strlcpy()
 
 # Refactor
-- split common code into a library
+- split common code into a library (drw.c)
