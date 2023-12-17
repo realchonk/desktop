@@ -1,0 +1,39 @@
+#!/bin/sh
+
+urlify() {
+	awk '
+BEGIN {
+	for (n = 0; n < 256; ++n)
+		ord[sprintf("%c", n)] = n
+}
+
+{
+	split($0, chars, "")
+	for (i=1; i <= length($0); ++i) {
+		ch = chars[i];
+		if (ch~"[a-zA-Z./_:]") {
+			printf("%c", ch);
+		} else {
+			n = ord[ch];
+			printf("%%%02x", n);
+		}
+	}
+}
+'
+}
+
+file=$HOME/.surf/history
+entry=$(grep -vE '^\s*(#.*)?$' "$file" | dmenu "$@" -l 10 -p "Search:")
+
+[ "$entry" ] || exit 1
+
+if ! grep -F "$entry" "$file"; then
+	echo "$entry" >> "$file"
+fi
+
+if ! echo "$entry" | grep -E '^https?://'; then
+	e=$(echo "$entry" | urlify)
+	entry=https://search.brave.com/search?q=$e
+fi
+
+xdg-open "$entry"

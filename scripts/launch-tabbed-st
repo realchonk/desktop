@@ -1,0 +1,9 @@
+#!/bin/sh
+
+if ! pgrep tabbed >/dev/null; then
+	rm -f /tmp/tabbed.pid
+	nohup sh -c 'set -o pipefail; tabbed -r 1 echo ID 2>/dev/null | sed -n "2p;2q" > /tmp/tabbed.pid' &
+	sleep 1
+fi
+
+nohup st -w "$(cat /tmp/tabbed.pid)" -- "$@" >/dev/null 2>&1 &

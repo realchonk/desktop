@@ -1,0 +1,68 @@
+#/bin/sh
+
+usage() {
+	echo "Usage: $0 test|paste|copy|login_enter|login_tab|paste_username|copy_username"
+	exit 1
+}
+
+paste() {
+	xdotool type "$1"
+}
+
+paste_enter() {
+	xdotool key Enter
+}
+
+paste_tab() {
+	xdotool key Tab
+}
+
+copy() {
+	echo "$1" | xclip -in -sel clipboard
+}
+
+mode=$1	# test, paste, copy, login_enter, login_tab
+
+[ -z "$mode" ] && usage
+
+cd "$HOME/.password-store"
+name=$(find . -type f -name '*.gpg' | sed 's/^\.\/\(.*\)\.gpg/\1/' | dmenu -l 10 -p Password) || exit 1
+creds=$(pass show "$name") || exit 1
+username=$(echo "$creds" | sed -n '/^username: /s///p')
+password=$(echo "$creds" | sed -n '/^password: /s///p')
+
+case "$mode" in
+test)
+	echo "Username: $username"
+	echo "Password: $password"
+	;;
+paste)
+	paste "$password"
+	paste_enter
+	;;
+copy)
+	copy "$password"
+	;;
+paste_username)
+	paste "$username"
+	paste_enter
+	;;
+copy_username)
+	copy "$username"
+	;;
+login_tab)
+	paste "$username"
+	paste_tab
+	paste "$password"
+	paste_tab
+	;;
+login_enter)
+	paste "$username"
+	paste_enter
+	paste "$password"
+	paste_enter
+	;;
+*)
+	usage
+	;;
+esac

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+case "$(printf 'Lock\nShutdown\nReboot\n' | dmenu -l 3 "$@")" in
+Lock)
+	slock
+	;;
+Shutdown)
+	doas shutdown -p now
+	;;
+Reboot)
+	doas reboot
+	;;
+esac

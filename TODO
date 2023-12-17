@@ -1,0 +1,13 @@
+# Import
+- dotfiles
+- surf
+- tabbed
+- xbgcd
+- slock
+- nsxiv
+
+# Fix
+- dwm: XKeycodeToKeysum
+
+# Refactor
+- split common code into a library

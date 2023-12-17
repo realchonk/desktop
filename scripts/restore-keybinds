@@ -1,0 +1,4 @@
+#!/bin/sh
+
+setxkbmap de us
+xmodmap -e 'keycode 66 = Escape'

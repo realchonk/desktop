@@ -1,0 +1,6 @@
+#!/bin/sh
+
+url=$(grep -vE '^\s*(#.*)?$' "$HOME/.surf/urls" | grep -E '^https?://.*$' | dmenu "$@" -l 10 -p "URL:")
+[ "$url" ] || exit 1
+
+xdg-open "$url"

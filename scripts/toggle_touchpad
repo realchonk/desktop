@@ -1,0 +1,12 @@
+#!/bin/sh
+
+case "$(uname)" in
+OpenBSD)
+	doas wsconsctl "mouse.tp.disable=$(doas wsconsctl mouse.tp.disable | cut -d'=' -f2 | awk '{print !$0}')"
+	;;
+*)
+	echo "Unsupported OS: $(uname)"
+	exit 1
+	;;
+esac
+

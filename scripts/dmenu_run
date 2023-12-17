@@ -1,0 +1,2 @@
+#!/bin/sh
+@SCRIPTS@/dmenu_path | dmenu "$@" | ${SHELL:-"/bin/sh"} &
