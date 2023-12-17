@@ -1,16 +1,16 @@
 include config.mk
 
 SRC_DWM		= dwm/dwm.c dwm/drw.c dwm/util.c
-HDR_DWM		= dwm/drw.h dwm/util.h dwm/config.h
+HDR_DWM		= dwm/drw.h dwm/util.h dwm/config.h master.h
 
 SRC_ST		= st/st.c st/x.c
 HDR_ST		= st/arg.h st/st.h st/win.h st/config.h
 
 SRC_DMENU	= dmenu/dmenu.c dmenu/drw.c dmenu/util.c
-HDR_DMENU	= dmenu/arg.h dmenu/config.h dmenu/drw.h dmenu/util.h
+HDR_DMENU	= dmenu/arg.h dmenu/config.h dmenu/drw.h dmenu/util.h master.h
 
 SRC_STEST	= dmenu/stest.c
-HDR_STEST	= ${HDR_DMENU}
+HDR_STEST	= dmenu/arg.h
 
 SRC_SLOCK	= slock/slock.c
 HDR_SLOCK	= slock/arg.h slock/config.h slock/util.h
