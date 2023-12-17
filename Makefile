@@ -39,6 +39,9 @@ install:
 install-user:
 	cp -rf dotfiles/.* ${HOME}/
 
+install-pkgs:
+	pkg_add -l pkgs
+
 bin/dwm: ${SRC_DWM} ${HDR_DWM}
 	@mkdir -p bin
 	${CC} -o $@ ${SRC_DWM} ${CFLAGS} `pkg-config --cflags --libs fontconfig freetype2 x11 xft xinerama`
