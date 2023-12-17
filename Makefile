@@ -14,7 +14,7 @@ HDR_STEST	= ${HDR_DMENU}
 
 MAN		= dwm/dwm.1 st/st.1 dmenu/dmenu.1 dmenu/stest.1
 
-all: bin/dwm bin/st bin/bedstatus bin/dmenu bin/stest
+all: bin/dwm bin/st bin/bedstatus bin/dmenu bin/stest bin/xbgcd
 
 clean:
 	rm -rf bin
@@ -54,5 +54,9 @@ bin/dmenu: ${SRC_DMENU} ${HDR_DMENU}
 bin/stest: ${SRC_STEST} ${HDR_STEST}
 	@mkdir -p bin
 	${CC} -o $@ ${SRC_STEST} ${CFLAGS}
+
+bin/xbgcd: xbgcd/xbgcd.c
+	@mkdir -p bin
+	${CC} -o $@ xbgcd/xbgcd.c ${CFLAGS} `pkg-config --cflags --libs x11`
 
 .PHONY: all clean install
