@@ -12,9 +12,12 @@ HDR_DMENU	= dmenu/arg.h dmenu/config.h dmenu/drw.h dmenu/util.h
 SRC_STEST	= dmenu/stest.c
 HDR_STEST	= ${HDR_DMENU}
 
-MAN		= dwm/dwm.1 st/st.1 dmenu/dmenu.1 dmenu/stest.1
+SRC_SLOCK	= slock/slock.c
+HDR_SLOCK	= slock/arg.h slock/config.h slock/util.h
 
-all: bin/dwm bin/st bin/bedstatus bin/dmenu bin/stest bin/xbgcd
+MAN		= dwm/dwm.1 st/st.1 dmenu/dmenu.1 dmenu/stest.1 slock/slock.1
+
+all: bin/dwm bin/st bin/bedstatus bin/dmenu bin/stest bin/xbgcd bin/slock
 
 clean:
 	rm -rf bin
@@ -31,9 +34,10 @@ install:
 	for f in ${MAN}; do										\
 		sed 's/VERSION/${VERSION}/g' < $$f > ${DESTDIR}${MANPREFIX}/man1/$$(basename "$$f");	\
 	done
+	chmod u+s ${DESTDIR}${PREFIX}/bin/slock
 
 install-user:
-	cp -rf dotfiles/{,.}* ${HOME}/
+	cp -rf dotfiles/.* ${HOME}/
 
 bin/dwm: ${SRC_DWM} ${HDR_DWM}
 	@mkdir -p bin
@@ -55,8 +59,12 @@ bin/stest: ${SRC_STEST} ${HDR_STEST}
 	@mkdir -p bin
 	${CC} -o $@ ${SRC_STEST} ${CFLAGS}
 
-bin/xbgcd: xbgcd/xbgcd.c
+bin/xbgcd: xbgcd/xbgcd.c xbgcd/config.h
 	@mkdir -p bin
 	${CC} -o $@ xbgcd/xbgcd.c ${CFLAGS} `pkg-config --cflags --libs x11`
+
+bin/slock: ${SRC_SLOCK} ${HDR_SLOCK}
+	@mkdir -p bin
+	${CC} -o $@ ${SRC_SLOCK} ${CFLAGS} `pkg-config --cflags --libs x11 xext xrandr` -lpthread
 
 .PHONY: all clean install
