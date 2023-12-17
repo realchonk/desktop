@@ -1043,10 +1043,15 @@ treset(void)
 	term.charset = 0;
 
 	for (i = 0; i < 2; i++) {
-		term.screen[i].sc = (TCursor){{
-			.fg = defaultfg,
-			.bg = defaultbg
-		}};
+		term.screen[i].sc = (TCursor){
+			.attr = {
+				.fg = defaultfg,
+				.bg = defaultbg
+			},
+			.x = 0,
+			.y = 0,
+			.state = '\0',
+		};
 		term.screen[i].cur = 0;
 		term.screen[i].off = 0;
 		for (j = 0; j < term.row; ++j) {

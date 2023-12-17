@@ -497,7 +497,11 @@ pinentry_parse_opts (int argc, char *argv[])
     ARGPARSE_s_s('c', "colors", "|STRING|Set custom colors for ncurses"),
     ARGPARSE_end()
   };
-  ARGPARSE_ARGS pargs = { &argc, &argv, 0 };
+  ARGPARSE_ARGS pargs;
+  memset (&pargs, 0, sizeof (pargs));
+  pargs.argc = &argc;
+  pargs.argv = &argv;
+  pargs.flags = 0;
 
   set_strusage (my_strusage);
 
@@ -1216,7 +1220,7 @@ register_commands (assuan_context_t ctx)
       { "SETTITLE",   cmd_settitle },
       { "SETTIMEOUT", cmd_settimeout },
       { "CLEARPASSPHRASE", cmd_clear_passphrase },
-      { NULL }
+      { NULL, NULL }
     };
   int i, j;
   gpg_error_t rc;
