@@ -35,7 +35,7 @@ HDR_PD		= master.h					\
 		  pinentry-dmenu/pinentry/pinentry.h
 
 
-MAN		= dwm/dwm.1 st/st.1 dmenu/dmenu.1 dmenu/stest.1 slock/slock.1
+MAN		= dwm/dwm.1 st/st.1 dmenu/dmenu.1 dmenu/stest.1 slock/slock.1 pinentry-dmenu/pinentry-dmenu.1
 
 all: bin/dwm bin/st bin/bedstatus bin/dmenu bin/stest bin/xbgcd bin/slock bin/pinentry-dmenu
 

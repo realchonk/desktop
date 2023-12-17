@@ -1,6 +1,8 @@
 /* See LICENSE file for copyright and license details. */
 /* Default settings; can be overriden by command line. */
 
+#include "../master.h"
+
 static int bottom = 0;
 static int embedded = 0;
 static int minpwlen = 32;
@@ -10,7 +12,7 @@ static int min_lineheight = 8;
 
 static const char *asterisk = "*";
 static const char *fonts[] = {
-	"monospace:size=10"
+	TOPBAR_FONT
 };
 static const char *prompt = NULL;
 static const char *colors[SchemeLast][4] = {
