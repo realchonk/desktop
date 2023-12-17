@@ -92,6 +92,6 @@ bin/slock: ${SRC_SLOCK} ${HDR_SLOCK}
 
 bin/pinentry-dmenu: ${SRC_PD} ${HDR_PD}
 	@mkdir -p bin
-	${CC} -o $@ ${SRC_PD} ${CFLAGS} `pkg-config --cflags --libs libassuan libconfig fontconfig freetype2 x11 xft xinerama`
+	${CC} -o $@ ${SRC_PD} ${CFLAGS} `pkg-config --cflags --libs libassuan fontconfig freetype2 x11 xft xinerama`
 
 .PHONY: all clean install
