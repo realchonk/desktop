@@ -1,4 +1,5 @@
 /* See LICENSE for license details. */
+#include "../master.h"
 #include <errno.h>
 #include <math.h>
 #include <limits.h>
@@ -265,7 +266,7 @@ static char *opt_title = NULL;
 static uint buttons; /* bit field of pressed buttons */
 
 void
-clipcopy(const Arg *dummy)
+clipcopy(UNUSED const Arg *dummy)
 {
 	Atom clipboard;
 
@@ -280,7 +281,7 @@ clipcopy(const Arg *dummy)
 }
 
 void
-clippaste(const Arg *dummy)
+clippaste(UNUSED const Arg *dummy)
 {
 	Atom clipboard;
 
@@ -290,14 +291,14 @@ clippaste(const Arg *dummy)
 }
 
 void
-selpaste(const Arg *dummy)
+selpaste(UNUSED const Arg *dummy)
 {
 	XConvertSelection(xw.dpy, XA_PRIMARY, xsel.xtarget, XA_PRIMARY,
 			xw.win, CurrentTime);
 }
 
 void
-numlock(const Arg *dummy)
+numlock(UNUSED const Arg *dummy)
 {
 	win.mode ^= MODE_NUMLOCK;
 }
@@ -322,7 +323,7 @@ zoomabs(const Arg *arg)
 }
 
 void
-zoomreset(const Arg *arg)
+zoomreset(UNUSED const Arg *arg)
 {
 	Arg larg;
 
@@ -1093,7 +1094,7 @@ xunloadfonts(void)
 }
 
 int
-ximopen(Display *dpy)
+ximopen(UNUSED Display *dpy)
 {
 	XIMCallback imdestroy = { .client_data = NULL, .callback = ximdestroy };
 	XICCallback icdestroy = { .client_data = NULL, .callback = xicdestroy };
@@ -1123,7 +1124,7 @@ ximopen(Display *dpy)
 }
 
 void
-ximinstantiate(Display *dpy, XPointer client, XPointer call)
+ximinstantiate(Display *dpy, UNUSED XPointer client, UNUSED XPointer call)
 {
 	if (ximopen(dpy))
 		XUnregisterIMInstantiateCallback(xw.dpy, NULL, NULL, NULL,
@@ -1131,7 +1132,7 @@ ximinstantiate(Display *dpy, XPointer client, XPointer call)
 }
 
 void
-ximdestroy(XIM xim, XPointer client, XPointer call)
+ximdestroy(UNUSED XIM xim, UNUSED XPointer client, UNUSED XPointer call)
 {
 	xw.ime.xim = NULL;
 	XRegisterIMInstantiateCallback(xw.dpy, NULL, NULL, NULL,
@@ -1140,7 +1141,7 @@ ximdestroy(XIM xim, XPointer client, XPointer call)
 }
 
 int
-xicdestroy(XIC xim, XPointer client, XPointer call)
+xicdestroy(UNUSED XIC xim, UNUSED XPointer client, UNUSED XPointer call)
 {
 	xw.ime.xic = NULL;
 	return 1;
@@ -1757,7 +1758,7 @@ xximspot(int x, int y)
 }
 
 void
-expose(XEvent *ev)
+expose(UNUSED XEvent *ev)
 {
 	redraw();
 }
@@ -1771,7 +1772,7 @@ visibility(XEvent *ev)
 }
 
 void
-unmap(XEvent *ev)
+unmap(UNUSED XEvent *ev)
 {
 	win.mode &= ~MODE_VISIBLE;
 }

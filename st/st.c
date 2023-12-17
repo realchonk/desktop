@@ -1,4 +1,5 @@
 /* See LICENSE for license details. */
+#include "../master.h"
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -726,7 +727,7 @@ execsh(char *cmd, char **args)
 }
 
 void
-sigchld(int a)
+sigchld(UNUSED int a)
 {
 	int stat;
 	pid_t p;
@@ -2138,7 +2139,7 @@ strreset(void)
 }
 
 void
-sendbreak(const Arg *arg)
+sendbreak(UNUSED const Arg *arg)
 {
 	if (tcsendbreak(cmdfd, 0))
 		perror("Error sending break");
@@ -2155,19 +2156,19 @@ tprinter(char *s, size_t len)
 }
 
 void
-toggleprinter(const Arg *arg)
+toggleprinter(UNUSED const Arg *arg)
 {
 	term.mode ^= MODE_PRINT;
 }
 
 void
-printscreen(const Arg *arg)
+printscreen(UNUSED const Arg *arg)
 {
 	tdump();
 }
 
 void
-printsel(const Arg *arg)
+printsel(UNUSED const Arg *arg)
 {
 	tdumpsel();
 }

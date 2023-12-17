@@ -19,6 +19,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+#include "../../master.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -123,7 +125,7 @@ print_warn(void)
 
 
 static void
-lock_pool( void *p, size_t n )
+lock_pool( UNUSED void *p, UNUSED size_t n )
 {
 #if defined(USE_CAPABILITIES) && defined(HAVE_MLOCK)
     int err;

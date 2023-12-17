@@ -995,9 +995,8 @@ grabkeys(void)
 }
 
 /*void
-incnmaster(const Arg *arg)
+incnmaster(UNUSED const Arg *arg)
 {
-	(void)arg;
 	selmon->nmaster = selmon->pertag->nmasters[selmon->pertag->curtag] = MAX(selmon->nmaster + arg->i, 0);
 	arrange(selmon);
 }*/
@@ -1031,7 +1030,7 @@ keypress(XEvent *e)
 }
 
 void
-killclient(const Arg *arg)
+killclient(UNUSED const Arg *arg)
 {
 	if (!selmon->sel)
 		return;
@@ -1146,7 +1145,7 @@ monocle(Monitor *m)
 }
 
 void
-movemouse(const Arg *arg)
+movemouse(UNUSED const Arg *arg)
 {
 	int x, y, ocx, ocy, nx, ny;
 	Client *c;
@@ -1312,7 +1311,7 @@ resizeclient(Client *c, int x, int y, int w, int h)
 }
 
 void
-resizemouse(const Arg *arg)
+resizemouse(UNUSED const Arg *arg)
 {
 	int ocx, ocy, nw, nh;
 	Client *c;
@@ -1668,7 +1667,7 @@ showhide(Client *c)
 }
 
 void
-sigchld(int unused)
+sigchld(UNUSED int unused)
 {
 	if (signal(SIGCHLD, sigchld) == SIG_ERR)
 		die("can't install SIGCHLD handler:");
@@ -1676,14 +1675,14 @@ sigchld(int unused)
 }
 
 void
-sighup(int unused)
+sighup(UNUSED int unused)
 {
 	Arg a = {.i = 1};
 	quit(&a);
 }
 
 void
-sigterm(int unused)
+sigterm(UNUSED int unused)
 {
 	Arg a = {.i = 0};
 	quit(&a);
@@ -1755,7 +1754,7 @@ tile(Monitor *m)
 }
 
 void
-togglebar(const Arg *arg)
+togglebar(UNUSED const Arg *arg)
 {
 	selmon->showbar = !selmon->showbar;
 	updatebarpos(selmon);
@@ -1764,7 +1763,7 @@ togglebar(const Arg *arg)
 }
 
 void
-togglefloating(const Arg *arg)
+togglefloating(UNUSED const Arg *arg)
 {
 	if (!selmon->sel)
 		return;
@@ -2194,7 +2193,7 @@ xerror(Display *dpy, XErrorEvent *ee)
 }
 
 int
-xerrordummy(Display *dpy, XErrorEvent *ee)
+xerrordummy(UNUSED Display *dpy, UNUSED XErrorEvent *ee)
 {
 	return 0;
 }
@@ -2202,14 +2201,14 @@ xerrordummy(Display *dpy, XErrorEvent *ee)
 /* Startup Error handler to check if another window manager
  * is already running. */
 int
-xerrorstart(Display *dpy, XErrorEvent *ee)
+xerrorstart(UNUSED Display *dpy, UNUSED XErrorEvent *ee)
 {
 	die("dwm: another window manager is already running");
 	return -1;
 }
 
 void
-zoom(const Arg *arg)
+zoom(UNUSED const Arg *arg)
 {
 	Client *c = selmon->sel;
 

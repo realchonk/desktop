@@ -4,7 +4,7 @@ SRC_DWM		= dwm/dwm.c dwm/drw.c dwm/util.c
 HDR_DWM		= dwm/drw.h dwm/util.h dwm/config.h master.h
 
 SRC_ST		= st/st.c st/x.c
-HDR_ST		= st/arg.h st/st.h st/win.h st/config.h
+HDR_ST		= st/arg.h st/st.h st/win.h st/config.h master.h
 
 SRC_DMENU	= dmenu/dmenu.c dmenu/drw.c dmenu/util.c
 HDR_DMENU	= dmenu/arg.h dmenu/config.h dmenu/drw.h dmenu/util.h master.h

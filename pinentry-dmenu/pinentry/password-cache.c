@@ -17,6 +17,8 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "../../master.h"
+
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
@@ -64,7 +66,7 @@ keygrip_to_label (const char *keygrip)
 #endif
 
 void
-password_cache_save (const char *keygrip, const char *password)
+password_cache_save (UNUSED const char *keygrip, UNUSED const char *password)
 {
 #ifdef HAVE_LIBSECRET
   char *label;
@@ -96,7 +98,7 @@ password_cache_save (const char *keygrip, const char *password)
 }
 
 char *
-password_cache_lookup (const char *keygrip)
+password_cache_lookup (UNUSED const char *keygrip)
 {
 #ifdef HAVE_LIBSECRET
   GError *error = NULL;
@@ -140,7 +142,7 @@ password_cache_lookup (const char *keygrip)
    error, 0 if the key is not found and 1 if the password was
    removed.  */
 int
-password_cache_clear (const char *keygrip)
+password_cache_clear (UNUSED const char *keygrip)
 {
 #ifdef HAVE_LIBSECRET
   GError *error = NULL;
