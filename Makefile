@@ -39,6 +39,9 @@ MAN		= dwm/dwm.1 st/st.1 dmenu/dmenu.1 dmenu/stest.1 slock/slock.1 pinentry-dmen
 
 all: bin/dwm bin/st bin/bedstatus bin/dmenu bin/stest bin/xbgcd bin/slock bin/pinentry-dmenu
 
+check:
+	find dotfiles/ -not -type d -exec sh -c 'diff -u {} "$$HOME/$$(echo "{}" | sed 's@^dotfiles/@@')"' \;
+
 clean:
 	rm -rf bin
 
