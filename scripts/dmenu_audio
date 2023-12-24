@@ -1,0 +1,40 @@
+#!/bin/sh
+
+while true; do
+	muted=$(sndioctl output.mute | cut -d= -f2)
+	level=$(sndioctl output.level | cut -d= -f2)
+
+	[ "$muted" = 1 ] && m="Unmute" || m="Mute"
+	if [ "$muted" = 1 ]; then
+		m1=' (Muted)'
+		m2='Unmute'
+	else
+		m1=''
+		m2='Mute'
+	fi
+
+	p=$(printf 'Level: %.2f%s' "$level" "$m1")
+	r=$(printf '+\n-\n%s\n' "$m2" | dmenu -p "$p" -l 5) || break
+
+	case "$r" in
+	+)
+		level=$(printf 'scale=2; %.2f+0.1\n' "$level" | bc)
+		sndioctl "output.level=$level"
+		;;
+	-)
+		level=$(printf 'scale=2; %.2f-0.1\n' "$level" | bc)
+		sndioctl "output.level=$level"
+		;;
+	Mute)
+		sndioctl 'output.mute=1'
+		;;
+	Unmute)
+		sndioctl 'output.mute=0'
+		;;
+	*)
+		if echo "$r" | grep -qE '^(0|1|0\.[0-9]+)$'; then
+			sndioctl "output.level=$r"
+		fi
+		;;
+	esac
+done
