@@ -14,7 +14,7 @@ while true; do
 	fi
 
 	p=$(printf 'Level: %.2f%s' "$level" "$m1")
-	r=$(printf '+\n-\n%s\n' "$m2" | dmenu -p "$p" -l 5) || break
+	r=$(printf '%s\n+\n-\n' "$m2" | dmenu -p "$p" -l 5) || break
 
 	case "$r" in
 	+)
@@ -27,9 +27,11 @@ while true; do
 		;;
 	Mute)
 		sndioctl 'output.mute=1'
+		break
 		;;
 	Unmute)
 		sndioctl 'output.mute=0'
+		break
 		;;
 	*)
 		if echo "$r" | grep -qE '^(0|1|0\.[0-9]+)$'; then
