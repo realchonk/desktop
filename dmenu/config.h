@@ -25,3 +25,6 @@ static unsigned int lines = 0;
  * for example: " /?\"&[]"
  */
 static const char worddelimiters[] = " ";
+
+/* Character to be shown, when entering a password. */
+static char pwcensorchar = '*';

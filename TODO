@@ -6,9 +6,6 @@
 # Fix
 - dwm: XKeycodeToKeysum
 
-# Patch
-- dmenu: passwords
-
 # Refactor
 - split common code into a library (drw.c)
 - pinentry code is ugly AF, replace it with something better
