@@ -53,7 +53,7 @@ install:
 	cp -f bin/* ${DESTDIR}${PREFIX}/bin/
 	cp -rf etc/* ${DESTDIR}/etc/
 	for f in scripts/*; do										\
-		sed 's#@PREFIX@#${PREFIX}#g; s#@SCRIPTS@#${SCRIPTDIR}#' < $$f 				\
+		sed 's#@PREFIX@#${PREFIX}#g; s#@SCRIPTS@#${SCRIPTDIR}#; s#@TERM@#${TERM}#' < $$f 	\
 		> ${DESTDIR}${SCRIPTDIR}/$$(basename $$f);						\
 		chmod +x ${DESTDIR}${SCRIPTDIR}/$$(basename $$f);					\
 	done

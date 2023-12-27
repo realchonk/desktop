@@ -78,6 +78,7 @@ static const char *xkillcmd[]  = { "xkill", NULL };
 static const Key keys[] = {
 	/* modifier                     key		function	argument */
 	{ MODKEY,			XK_p,		spawn,		{.v = dmscript("dmenu_run") } },
+	{ MODKEY,			XK_r,		spawn,		{.v = dmscript("dmenu_run_app") } },
 	{ MODKEY|ShiftMask,		XK_p,		spawn,		{.v = dmscript("dmenu_pass", "paste") } },
 	{ MODKEY|ControlMask,		XK_p,		spawn,		{.v = dmscript("dmenu_pass", "copy") } },
 	{ MODKEY,			XK_a,		spawn,		{.v = dmscript("dmenu_pass", "login_tab") } },

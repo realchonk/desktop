@@ -1,0 +1,28 @@
+#!/bin/sh
+
+apps() {
+	for f in /usr/local/share/applications/*.desktop; do
+		name=$(grep -m1 '^Name=' "$f" | sed 's/^Name=//')
+		[ "$name" ] && printf '%s;%s\n' "$f" "$name"
+	done
+}
+
+run() {
+	grep -m1 '^Exec=' "$app" | sed 's/^Exec=//; s/%.//g; s/[[:space:]]*#//; s/\\\\/\\/g'
+}
+
+app=$(apps | sort -uft ';' -k2 | dmenu -i -S -F -d ';' -l 20)
+[ -e "$app" ] || exit 1
+
+run
+
+shell=${SHELL:-"/bin/sh"}
+
+if grep -q '^Terminal=true$' "$app"; then
+	cmd=$(mktemp)
+	run > "$cmd"
+	printf '\nrm -f "%s"\n' "$cmd" >> "$cmd"
+	exec @TERM@ -e sh "$cmd"
+else
+	run | "$shell"
+fi
