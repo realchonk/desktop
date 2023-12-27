@@ -353,6 +353,7 @@ main(int argc, char **argv) {
 	Display *dpy;
 	int s, nlocks, nscreens;
 	CARD16 standby, suspend, off;
+	int working_dpms;
 
 	ARGBEGIN {
 	case 'v':
@@ -424,19 +425,20 @@ main(int argc, char **argv) {
 		return 1;
 
 	/* DPMS magic to disable the monitor */
-	if (!DPMSCapable(dpy))
-		die("slock: DPMSCapable failed\n");
-	if (!DPMSEnable(dpy))
-		die("slock: DPMSEnable failed\n");
-	if (!DPMSGetTimeouts(dpy, &standby, &suspend, &off))
-		die("slock: DPMSGetTimeouts failed\n");
-	if (!standby || !suspend || !off)
-		die("slock: at least one DPMS variable is zero\n");
-	if (!DPMSSetTimeouts(dpy, monitortime, monitortime, monitortime))
-		die("slock: DPMSSetTimeouts failed\n");
-	
-	XSync(dpy, 0);
-
+	working_dpms = DPMSCapable(dpy) == True;
+	if (working_dpms) {
+		if (!DPMSEnable(dpy))
+			die("slock: DPMSEnable failed\n");
+		if (!DPMSGetTimeouts(dpy, &standby, &suspend, &off))
+			die("slock: DPMSGetTimeouts failed\n");
+		if (!standby || !suspend || !off)
+			die("slock: at least one DPMS variable is zero\n");
+		if (!DPMSSetTimeouts(dpy, monitortime, monitortime, monitortime))
+			die("slock: DPMSSetTimeouts failed\n");
+		XSync(dpy, 0);
+	} else {
+		fprintf(stderr, "slock: DPMS not supported\n");
+	}
 
 	/* run post-lock command */
 	if (argc > 0) {
@@ -464,7 +466,9 @@ main(int argc, char **argv) {
 #endif
 
 	/* reset DPMS values to inital ones */
-	DPMSSetTimeouts(dpy, standby, suspend, off);
+	if (working_dpms)
+		DPMSSetTimeouts(dpy, standby, suspend, off);
+
 	XSync(dpy, 0);
 
 	return 0;
