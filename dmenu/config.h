@@ -26,5 +26,8 @@ static unsigned int lines = 0;
  */
 static const char worddelimiters[] = " ";
 
+/* delimiter for tmenu */
+static char valuedelimiter = '\0';
+
 /* Character to be shown, when entering a password. */
 static char pwcensorchar = '*';

@@ -50,6 +50,9 @@ dmenu matches menu items case insensitively.
 .B \-P
 dmenu will not directly display the keyboard input, but instead replace it with dots. All data from stdin will be ignored.
 .TP
+.BI \-d " delimiter"
+when used in a line, the value after the delimiter will be displayed. When selected, the value before the delimiter will be output. Only uses a single char as the delimiter.
+.TP
 .BI \-l " lines"
 dmenu lists items vertically, with the given number of lines.
 .TP

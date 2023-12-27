@@ -32,7 +32,7 @@
 enum { SchemeNorm, SchemeSel, SchemeOut, SchemeNormHighlight, SchemeSelHighlight, SchemeLast }; /* color schemes */
 
 struct item {
-	char *text;
+	char *text, *value;
 	struct item *left, *right;
 	int out;
 	double distance;
@@ -109,8 +109,8 @@ cleanup(void)
 	XUngrabKey(dpy, AnyKey, AnyModifier, root);
 	for (i = 0; i < SchemeLast; i++)
 		free(scheme[i]);
-	for (i = 0; items && items[i].text; ++i)
-		free(items[i].text);
+	for (i = 0; items && items[i].value; ++i)
+		free(items[i].value);
 	free(items);
 	drw_free(drw);
 	XSync(dpy, False);
@@ -645,7 +645,7 @@ insert:
 		break;
 	case XK_Return:
 	case XK_KP_Enter:
-		puts((sel && !(ev->state & ShiftMask)) ? sel->text : text);
+		puts((sel && !(ev->state & ShiftMask)) ? sel->value : text);
 		if (!(ev->state & ControlMask)) {
 			cleanup();
 			exit(0);
@@ -704,7 +704,7 @@ paste(void)
 static void
 readstdin(void)
 {
-	char *line = NULL;
+	char *line = NULL, *text;
 	size_t i, junk, size = 0;
 	ssize_t len;
 
@@ -720,11 +720,19 @@ readstdin(void)
 				die("cannot realloc %zu bytes:", size);
 		if (line[len - 1] == '\n')
 			line[len - 1] = '\0';
-		items[i].text = line;
+		if (valuedelimiter != '\0' && (text = strchr(line, valuedelimiter)) != NULL) {
+			items[i].text = text + 1;
+			text[0] = '\0';
+		} else {
+			items[i].text = line;
+		}
+		items[i].value = line;
 		items[i].out = 0;
 	}
-	if (items)
+	if (items) {
 		items[i].text = NULL;
+		items[i].value = NULL;
+	}
 	lines = MIN(lines, i);
 }
 
@@ -870,7 +878,7 @@ setup(void)
 static void
 usage(void)
 {
-	die("usage: dmenu [-bfivP] [-l lines] [-p prompt] [-fn font] [-m monitor]\n"
+	die("usage: dmenu [-bfivP] [-d delim] [-l lines] [-p prompt] [-fn font] [-m monitor]\n"
 	    "             [-nb color] [-nf color] [-sb color] [-sf color] [-w windowid]");
 }
 
@@ -899,6 +907,8 @@ main(int argc, char *argv[])
 		else if (i + 1 == argc)
 			usage();
 		/* these options take one argument */
+		else if (!strcmp(argv[i], "-d"))   /* delimiter for tmenu */
+			valuedelimiter = argv[++i][0];
 		else if (!strcmp(argv[i], "-l"))   /* number of lines in vertical list */
 			lines = atoi(argv[++i]);
 		else if (!strcmp(argv[i], "-m"))
