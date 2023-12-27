@@ -1,6 +1,5 @@
 /* See LICENSE file for copyright and license details. */
 #include <ctype.h>
-#include <libconfig.h>
 #include <locale.h>
 #include <signal.h>
 #include <stdio.h>
