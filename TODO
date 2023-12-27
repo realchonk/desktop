@@ -5,7 +5,11 @@
 
 # Fix
 - dwm: XKeycodeToKeysum
-- pinentry-dmenu: strcpy() -> strlcpy()
+
+# Patch
+- dmenu: passwords
 
 # Refactor
 - split common code into a library (drw.c)
+- pinentry code is ugly AF, replace it with something better
+- pinentry-dmenu should ideally not be a fork of dmenu, but rather use it directly

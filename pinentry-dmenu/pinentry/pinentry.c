@@ -200,7 +200,7 @@ pinentry_inq_quality (pinentry_t pin, const char *passphrase, size_t length)
   const char prefix[] = "INQUIRE QUALITY ";
   char *command;
   char *line;
-  size_t linelen;
+  size_t linelen, clen;
   int gotvalue = 0;
   int value = 0;
   int rc;
@@ -212,10 +212,11 @@ pinentry_inq_quality (pinentry_t pin, const char *passphrase, size_t length)
     length = 300;  /* Limit so that it definitely fits into an Assuan
                       line.  */
 
-  command = secmem_malloc (strlen (prefix) + 3*length + 1);
+  clen = strlen (prefix) + 3*length + 1;
+  command = secmem_malloc (clen);
   if (!command)
     return 0;
-  strcpy (command, prefix);
+  strlcpy (command, prefix, clen);
   copy_and_escape (command + strlen(command), passphrase, length);
   rc = assuan_write_line (ctx, command);
   secmem_free (command);
@@ -352,7 +353,7 @@ pinentry_init (const char *pgmname)
   /* Store away our name. */
   if (strlen (pgmname) > sizeof this_pgmname - 2)
     abort ();
-  strcpy (this_pgmname, pgmname);
+  strlcpy (this_pgmname, pgmname, sizeof(this_pgmname));
 
   gpgrt_check_version (NULL);
 

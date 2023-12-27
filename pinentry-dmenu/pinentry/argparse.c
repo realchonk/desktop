@@ -39,6 +39,7 @@
 #endif
 
 #include <stdio.h>
+#include <assert.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -265,7 +266,7 @@ typedef struct iio_item_def_s *IIO_ITEM_DEF;
 struct iio_item_def_s
 {
   IIO_ITEM_DEF next;
-  char name[1];      /* String with the long option name.  */
+  char name[];      /* String with the long option name.  */
 };
 
 static const char *(*strusage_handler)( int ) = NULL;
@@ -482,9 +483,10 @@ ignore_invalid_option_add (ARGPARSE_ARGS *arg, FILE *fp)
               state = addNAME;
               goto again;
             }
-          else if (namelen < DIM(name)-1)
+          else if (namelen < DIM(name)-1) {
+            assert(namelen < (sizeof(name) - 1));
             name[namelen++] = c;
-          else /* Too long.  */
+	  } else /* Too long.  */
             state = skipNAME;
           break;
 
@@ -500,10 +502,10 @@ ignore_invalid_option_add (ARGPARSE_ARGS *arg, FILE *fp)
           name[namelen] = 0;
           if (!ignore_invalid_option_p (arg, name))
             {
-              item = jnlib_malloc (sizeof *item + namelen);
+              item = jnlib_malloc (sizeof *item + namelen + 1);
               if (!item)
                 return 1;
-              strcpy (item->name, name);
+	      strlcpy (item->name, name, namelen + 1);
               item->next = (IIO_ITEM_DEF)arg->internal.iio_list;
               arg->internal.iio_list = item;
             }

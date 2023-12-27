@@ -53,14 +53,8 @@ static char *
 keygrip_to_label (const char *keygrip)
 {
   char const prefix[] = "GnuPG: ";
-  char *label;
-
-  label = malloc (sizeof (prefix) + strlen (keygrip));
-  if (label)
-    {
-      memcpy (label, prefix, sizeof (prefix) - 1);
-      strcpy (&label[sizeof (prefix) - 1], keygrip);
-    }
+  char *label = NULL;
+  asprintf (&label, "%s%s", prefix, keygrip);
   return label;
 }
 #endif
@@ -104,6 +98,7 @@ password_cache_lookup (UNUSED const char *keygrip)
   GError *error = NULL;
   char *password;
   char *password2;
+  size_t plen;
 
   if (! *keygrip)
     return NULL;
@@ -124,9 +119,10 @@ password_cache_lookup (UNUSED const char *keygrip)
     return NULL;
 
   /* The password needs to be returned in secmem allocated memory.  */
-  password2 = secmem_malloc (strlen (password) + 1);
+  plen = strlen (password) + 1;
+  password2 = secmem_malloc (plen);
   if (password2)
-    strcpy(password2, password);
+    strlcpy(password2, password, plen);
   else
     printf("secmem_malloc failed: can't copy password!\n");
 
