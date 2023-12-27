@@ -2,7 +2,7 @@
 #
 # sh/ksh initialization
 
-PATH=$HOME/.local/bin:$HOME/.cargo/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R6/bin:/usr/local/bin:/usr/local/sbin
+PATH=$HOME/.local/bin:$HOME/.cargo/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R6/bin:/usr/local/bin:/usr/local/sbin:/usr/local/jdk-21/bin
 export PATH HOME TERM
 
 export ENV=/etc/mykshrc

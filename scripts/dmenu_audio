@@ -36,6 +36,7 @@ while true; do
 	*)
 		if echo "$r" | grep -qE '^(0|1|0\.[0-9]+)$'; then
 			sndioctl "output.level=$r"
+			break
 		fi
 		;;
 	esac
