@@ -67,13 +67,13 @@ static const Layout layouts[] = {
 
 /* commands */
 #define DMENU_ARGS "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", col_gray4
-static const char *termcmd[]  = { "st", NULL };
+static const char *termcmd[]  = { TERM, NULL };
 static const char *slockcmd[] = { "pkill", "-USR1", "xidle", NULL };
 static const char *xkillcmd[]  = { "xkill", NULL };
 
 #define script(...) ((const char *[]){ "/bin/sh", PREFIX "/libexec/desktop/" __VA_ARGS__, NULL })
 #define dmscript(...) script(__VA_ARGS__, DMENU_ARGS)
-#define runst(...) ((const char *[]){ "st", "-e", __VA_ARGS__, NULL })
+#define runst(...) ((const char *[]){ TERM, "-e", __VA_ARGS__, NULL })
 
 static const Key keys[] = {
 	/* modifier                     key		function	argument */
