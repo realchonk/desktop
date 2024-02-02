@@ -1,0 +1,14 @@
+#!/bin/sh
+
+out=HDMI2
+
+option=$(printf 'on\noff\n' | dmenu -l 2 -p "Configure $out") || exit 0
+
+case "$option" in
+on)
+	xrandr --output "$out" --auto --pos 1920x0
+	;;
+off)
+	xrandr --output "$out" --off
+	;;
+esac

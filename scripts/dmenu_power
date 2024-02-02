@@ -1,13 +1,19 @@
 #!/bin/sh
 
-case "$(printf 'Lock\nShutdown\nReboot\n' | dmenu -l 3 "$@")" in
+case "$(printf 'Lock\nSuspend\nShutdown\nReboot\nHibernate\n' | dmenu -l 5 "$@")" in
 Lock)
 	slock
+	;;
+Suspend)
+	zzz
 	;;
 Shutdown)
 	doas shutdown -p now
 	;;
 Reboot)
 	doas reboot
+	;;
+Hibernate)
+	ZZZ
 	;;
 esac
