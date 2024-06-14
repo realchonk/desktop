@@ -16,7 +16,7 @@
 #include <err.h>
 
 #define MAXSENSORS 16
-#define CPUSPEEDHISTLEN 30
+#define CPUSPEEDHISTLEN 3
 
 static int power_sensors[MAXSENSORS];
 static int cputemp_sensor = -1;
