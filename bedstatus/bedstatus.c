@@ -8,6 +8,8 @@
 
 #ifdef __OpenBSD__
 # include "openbsd.c"
+#elif defined(__linux__)
+# include "linux.c"
 #else
 # include "unsupported.c"
 #endif

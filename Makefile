@@ -9,7 +9,8 @@ HDR_ST		= st/arg.h st/st.h st/win.h st/config.h master.h
 SRC_BS		= bedstatus/bedstatus.c
 HDR_BS		= bedstatus/bedstatus.h				\
 		  bedstatus/unsupported.c			\
-		  bedstatus/openbsd.c
+		  bedstatus/openbsd.c				\
+		  bedstatus/linux.c
 
 SRC_DMENU	= dmenu/dmenu.c dmenu/drw.c dmenu/util.c
 HDR_DMENU	= dmenu/arg.h dmenu/config.h dmenu/drw.h dmenu/util.h master.h
