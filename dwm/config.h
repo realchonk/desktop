@@ -69,6 +69,7 @@ static const Layout layouts[] = {
 /* commands */
 #define DMENU_ARGS "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", col_gray4
 static const char *termcmd[]  = { TERM, NULL };
+static const char *termcmd2[]  = { "vertigo", NULL };
 static const char *slockcmd[] = { "pkill", "-USR1", "xidle", NULL };
 static const char *xkillcmd[]  = { "xkill", NULL };
 
@@ -97,6 +98,7 @@ static const Key keys[] = {
 	{ MODKEY,			XK_Escape,	spawn,		{.v = slockcmd } },
 	{ MODKEY|ShiftMask,		XK_Escape,	spawn,		{.v = dmscript("dmenu_power") } },
 	{ MODKEY,			XK_Return,	spawn,		{.v = termcmd } },
+	{ MODKEY|ShiftMask,		XK_Return,	spawn,		{.v = termcmd2 } },
 	{ MODKEY|ControlMask,		XK_q,		spawn,		{.v = xkillcmd } },
 	//{ MODKEY|ShiftMask,		XK_Return,	spawn,		{.v = script("launch-tabbed-st") } },
 	{ MODKEY|ShiftMask,		XK_t,		spawn,		{.v = script("toggle_touchpad")} },
