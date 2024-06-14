@@ -54,9 +54,8 @@ clean:
 	rm -rf bin
 
 install:
-	mkdir -p ${DESTDIR}${PREFIX}/bin ${DESTDIR}${MANPREFIX}/man1 ${DESTDIR}${SCRIPTDIR} ${DESTDIR}/etc
+	mkdir -p ${DESTDIR}${PREFIX}/bin ${DESTDIR}${MANPREFIX}/man1 ${DESTDIR}${SCRIPTDIR}
 	cp -f bin/* ${DESTDIR}${PREFIX}/bin/
-	[ "$$(uname)" = "openbsd" ] && cp -rf etc/* ${DESTDIR}/etc/
 	for f in scripts/*; do										\
 		sed 's#@PREFIX@#${PREFIX}#g; s#@SCRIPTS@#${SCRIPTDIR}#; s#@TERM@#${TERM}#' < $$f 	\
 		> ${DESTDIR}${SCRIPTDIR}/$$(basename $$f);						\
@@ -66,6 +65,10 @@ install:
 		sed 's/VERSION/${VERSION}/g' < $$f > ${DESTDIR}${MANPREFIX}/man1/$$(basename "$$f");	\
 	done
 	chmod u+s ${DESTDIR}${PREFIX}/bin/slock
+
+install-etc:
+	mkdir -p ${DESTDIR}/etc
+	cp -rf etc/* ${DESTDIR}/etc/
 
 install-user:
 	find dotfiles -mindepth 1 -maxdepth 1 | xargs -I '{}' cp -rf '{}' "$$HOME/"
