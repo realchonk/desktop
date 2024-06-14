@@ -56,7 +56,7 @@ clean:
 install:
 	mkdir -p ${DESTDIR}${PREFIX}/bin ${DESTDIR}${MANPREFIX}/man1 ${DESTDIR}${SCRIPTDIR} ${DESTDIR}/etc
 	cp -f bin/* ${DESTDIR}${PREFIX}/bin/
-	cp -rf etc/* ${DESTDIR}/etc/
+	[ "$$(uname)" = "openbsd" ] && cp -rf etc/* ${DESTDIR}/etc/
 	for f in scripts/*; do										\
 		sed 's#@PREFIX@#${PREFIX}#g; s#@SCRIPTS@#${SCRIPTDIR}#; s#@TERM@#${TERM}#' < $$f 	\
 		> ${DESTDIR}${SCRIPTDIR}/$$(basename $$f);						\
@@ -68,7 +68,7 @@ install:
 	chmod u+s ${DESTDIR}${PREFIX}/bin/slock
 
 install-user:
-	cp -rf dotfiles/.* ${HOME}/
+	find dotfiles -mindepth 1 -maxdepth 1 | xargs -I '{}' cp -rf '{}' "$$HOME/"
 
 install-pkgs:
 	pkg_add -l pkgs
