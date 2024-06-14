@@ -6,6 +6,11 @@ HDR_DWM		= dwm/drw.h dwm/util.h dwm/config.h master.h
 SRC_ST		= st/st.c st/x.c
 HDR_ST		= st/arg.h st/st.h st/win.h st/config.h master.h
 
+SRC_BS		= bedstatus/bedstatus.c
+HDR_BS		= bedstatus/bedstatus.h				\
+		  bedstatus/unsupported.c			\
+		  bedstatus/openbsd.c
+
 SRC_DMENU	= dmenu/dmenu.c dmenu/drw.c dmenu/util.c
 HDR_DMENU	= dmenu/arg.h dmenu/config.h dmenu/drw.h dmenu/util.h master.h
 
@@ -76,7 +81,7 @@ bin/st: ${SRC_ST} ${HDR_ST}
 	@mkdir -p bin
 	${CC} -o $@ ${SRC_ST} ${CFLAGS} `pkg-config --cflags --libs fontconfig freetype2 x11 xft xrender` -lm -lutil
 
-bin/bedstatus: bedstatus/bedstatus.c
+bin/bedstatus: ${SRC_BS} ${HDR_BS}
 	@mkdir -p bin
 	${CC} -o $@ bedstatus/bedstatus.c ${CFLAGS} `pkg-config --cflags --libs x11`
 
