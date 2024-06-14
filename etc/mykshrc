@@ -75,3 +75,7 @@ alias papropos='apropos -M /usr/local/share/doc/posix/man'
 alias pwhatis='whatis -M /usr/local/share/doc/posix/man'
 alias gd='got di | bat -l patch'
 alias gl='got log -d | less'
+
+if [ "$TERM" = "xterm" ]; then
+	printf '\e[4?h'
+fi
