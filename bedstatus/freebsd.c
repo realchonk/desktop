@@ -58,7 +58,7 @@ static bool bat_charging (bool *b)
 	if (!SYSCTL ("hw.acpi.battery.state", &x))
 		return false;
 
-	*b = (x == 0);
+	*b = (x & 2) == 2;
 
 	return true;
 }
