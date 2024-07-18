@@ -129,7 +129,7 @@ static void format_bat (const struct status *st)
 
 	append ("[BAT ");
 
-	if (!st->has_bat_charging && st->has_bat_perc) {
+	if (st->has_bat_perc && (!st->has_bat_charging || !st->bat_charging)) {
 		if (st->bat_perc < 25) {
 			append (SYM_BAT_EMPTY);
 		} else if (st->bat_perc < 50) {
