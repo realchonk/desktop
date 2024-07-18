@@ -70,7 +70,7 @@ static bool bat_rem (int *x)
 
 static bool power (int *pwr)
 {
-	return SYSCTL ("hw.acpi.battery.rate", pwr);
+	return SYSCTL ("hw.acpi.battery.rate", pwr) && *pwr > 0;
 }
 
 static bool cpu_speed (int *mhz)
