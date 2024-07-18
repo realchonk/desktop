@@ -14,6 +14,7 @@ struct cpu_times {
 static long pagesize;
 static int ncpu;
 static struct cpu_times *old = NULL, *new, *diff;
+static char **cpuspeed_sysctls = NULL;
 
 static bool xsysctl (const char *name, void *ptr, size_t len)
 {
@@ -72,6 +73,22 @@ static bool power (int *pwr)
 	return SYSCTL ("hw.acpi.battery.rate", pwr);
 }
 
+static bool cpu_speed (int *mhz)
+{
+	int x, sum = 0, n = 0;
+
+	for (int i = 0; i < ncpu; ++i) {
+		if (!SYSCTL (cpuspeed_sysctls[i], &x))
+			continue;
+		sum += x;
+		++n;
+	}
+
+	*mhz = sum / n;
+
+	return n > 0;
+}
+
 void init_backend (void)
 {
 	pagesize = getpagesize ();
@@ -80,6 +97,11 @@ void init_backend (void)
 		new = calloc (ncpu, sizeof (struct cpu_times));
 		diff = calloc (ncpu, sizeof (struct cpu_times));
 	}
+
+	cpuspeed_sysctls = calloc (ncpu, sizeof (char *));
+	for (int i = 0; i < ncpu; ++i) {
+		asprintf (&cpuspeed_sysctls[i], "dev.cpu.%d.freq", i);
+	}
 }
 
 void update_status (struct status *st)
@@ -87,6 +109,7 @@ void update_status (struct status *st)
 	memset (st, 0, sizeof (*st));
 	st->has_mem_usage = mem_usage (&st->mem_usage);
 	st->has_cpu_usage = cpu_usage (&st->cpu_usage);
+	st->has_cpu_speed = cpu_speed (&st->cpu_speed);
 	st->has_bat_perc = bat_perc (&st->bat_perc);
 	st->has_bat_rem = bat_rem (&st->bat_rem);
 	st->has_bat_charging = bat_charging (&st->bat_charging);
