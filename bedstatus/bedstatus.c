@@ -1,3 +1,6 @@
+#ifdef __FreeBSD__
+# define __BSD_VISIBLE 1
+#endif
 #include <X11/Xlib.h>
 #include <unistd.h>
 #include <stdarg.h>
@@ -10,6 +13,8 @@
 # include "openbsd.c"
 #elif defined(__linux__)
 # include "linux.c"
+#elif defined(__FreeBSD__)
+# include "freebsd.c"
 #else
 # include "unsupported.c"
 #endif
