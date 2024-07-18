@@ -75,11 +75,46 @@ set -A complete_pass_1 -- show generate ls edit git rm cp mv
 alias pman='man -M /usr/local/share/doc/posix/man'
 alias papropos='apropos -M /usr/local/share/doc/posix/man'
 alias pwhatis='whatis -M /usr/local/share/doc/posix/man'
+
 gd() {
 	got di "$@" | bat -l patch
 }
+
 gl() {
 	got log -d "$@" | less
+}
+
+_gu_do() {
+	got fe -b "$1"
+	got up -b "origin/$1"
+	got rb "$1"
+}
+
+gu() {
+	if [ $# -ge 1 ]; then
+		_gu_old=$(got br)
+
+		for _gu_br in "$@"; do
+			_gu_do "${_gu_br}"
+		done
+
+		got up -b "${_gu_old}"
+	else
+		_gu_do "$(got br)"
+	fi
+	unset _gu_old _gu_br
+}
+
+gua() {
+	_gu_old=$(got br)
+
+	got br -l | cut -d: -f1 | sed 's/^[\* ] //' | grep -v '/' | while read -r _gu_br; do
+		_gu_do "${_gu_br}"
+	done
+
+	got up -b "${_gu_old}"
+
+	unset _gu_br _gu_old
 }
 
 if [ "$TERM" = "xterm" ]; then
