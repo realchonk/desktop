@@ -85,8 +85,8 @@ gl() {
 }
 
 _gu_do() {
-	got fe -b "$1"
-	got up -b "origin/$1"
+	got fe -qb "$1"
+	got up -qb "origin/$1"
 	got rb "$1"
 }
 
@@ -98,7 +98,7 @@ gu() {
 			_gu_do "${_gu_br}"
 		done
 
-		got up -b "${_gu_old}"
+		got up -qb "${_gu_old}"
 	else
 		_gu_do "$(got br)"
 	fi
@@ -112,7 +112,7 @@ gua() {
 		_gu_do "${_gu_br}"
 	done
 
-	got up -b "${_gu_old}"
+	got up -qb "${_gu_old}"
 
 	unset _gu_br _gu_old
 }
