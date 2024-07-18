@@ -50,6 +50,28 @@ static bool bat_perc (int *perc)
 	return SYSCTL ("hw.acpi.battery.life", perc);
 }
 
+static bool bat_charging (bool *b)
+{
+	int x;
+
+	if (!SYSCTL ("hw.acpi.battery.state", &x))
+		return false;
+
+	*b = (x == 0);
+
+	return true;
+}
+
+static bool bat_rem (int *x)
+{
+	return SYSCTL ("hw.acpi.battery.time", x) && *x != -1;
+}
+
+static bool power (int *pwr)
+{
+	return SYSCTL ("hw.acpi.battery.rate", pwr);
+}
+
 void init_backend (void)
 {
 	pagesize = getpagesize ();
@@ -66,4 +88,7 @@ void update_status (struct status *st)
 	st->has_mem_usage = mem_usage (&st->mem_usage);
 	st->has_cpu_usage = cpu_usage (&st->cpu_usage);
 	st->has_bat_perc = bat_perc (&st->bat_perc);
+	st->has_bat_rem = bat_rem (&st->bat_rem);
+	st->has_bat_charging = bat_charging (&st->bat_charging);
+	st->has_power = power (&st->power);
 }
