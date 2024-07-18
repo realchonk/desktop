@@ -91,7 +91,7 @@ _gu_do() {
 }
 
 gu() {
-	if [ $# -ge 1 ]; then
+	if [ $# -gt 1 ]; then
 		_gu_old=$(got br)
 
 		for _gu_br in "$@"; do
@@ -99,6 +99,8 @@ gu() {
 		done
 
 		got up -qb "${_gu_old}"
+	else
+		_gu_do "$1"
 	else
 		_gu_do "$(got br)"
 	fi
