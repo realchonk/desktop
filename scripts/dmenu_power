@@ -5,7 +5,7 @@ Lock)
 	slock
 	;;
 Suspend)
-	zzz
+	doas zzz
 	;;
 Shutdown)
 	doas shutdown -p now
