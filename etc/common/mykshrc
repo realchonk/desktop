@@ -99,7 +99,7 @@ gu() {
 		done
 
 		got up -qb "${_gu_old}"
-	else
+	elif [ $# -eq 1 ]; then
 		_gu_do "$1"
 	else
 		_gu_do "$(got br)"
