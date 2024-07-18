@@ -55,10 +55,12 @@ fi
 #	command man "$@"
 #}
 
-set -A complete_rcctl_1 -- configtest check reload restart stop start status disable enable ls
-set -A complete_rcctl_2 -- $(rcctl ls all)
-set -A complete_vmctl_1 -- console create pause reload start status stop unpause wait
-set -A complete_vmctl -- $(vmctl status | awk '!/NAME/{print $NF}')
+if [ "$(uname)" = "OpenBSD" ]; then
+	set -A complete_rcctl_1 -- configtest check reload restart stop start status disable enable ls
+	set -A complete_rcctl_2 -- $(rcctl ls all)
+	set -A complete_vmctl_1 -- console create pause reload start status stop unpause wait
+	set -A complete_vmctl -- $(vmctl status | awk '!/NAME/{print $NF}')
+fi
 set -A complete_git_1 -- clone init add mv restore rm bisect diff show status branch commit merge rebase reset tag fetch pull push
 COMMANDS=$(command ls -1 -- $(echo "$PATH" | tr ':' '\n') | sort | uniq)
 set -A complete_doas_1 -- ${COMMANDS}
@@ -67,14 +69,18 @@ set -A complete_exec -- ${COMMANDS}
 set -A complete_ifconfig_1 -- $(ifconfig | grep -o '^[a-z0-9]*')
 set -A complete_ifconfig -- up down join nwid wpakey autoconf -inet -inet6
 set -A complete_pass_1 -- show generate ls edit git rm cp mv
-set -A complete_pass -- $(cd $HOME/.password-store && find . -type f -name '*.gpg' | sed 's/^\.\///; s/\.gpg$//')
+#set -A complete_pass -- $(cd $HOME/.password-store && find . -type f -name '*.gpg' | sed 's/^\.\///; s/\.gpg$//')
 
 
 alias pman='man -M /usr/local/share/doc/posix/man'
 alias papropos='apropos -M /usr/local/share/doc/posix/man'
 alias pwhatis='whatis -M /usr/local/share/doc/posix/man'
-alias gd='got di | bat -l patch'
-alias gl='got log -d | less'
+gd() {
+	got di "$@" | bat -l patch
+}
+gl() {
+	got log -d "$@" | less
+}
 
 if [ "$TERM" = "xterm" ]; then
 	printf '\e[4?h'
