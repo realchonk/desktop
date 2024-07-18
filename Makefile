@@ -47,7 +47,7 @@ MAN		= dwm/dwm.1 st/st.1 dmenu/dmenu.1 dmenu/stest.1 slock/slock.1 pinentry-dmen
 all: bin/dwm bin/st bin/bedstatus bin/dmenu bin/stest bin/xbgcd bin/slock bin/pinentry-dmenu
 
 check:
-	find etc/ -not -type d -exec diff -u {} /{} \;
+	find etc/common etc/$$(uname) -not -type d | awk '{a=$$0; sub(/etc\/[^\/]+/, "/etc", a); system("diff -u " $$0 " " a)}'
 
 check-user:
 	find dotfiles/ -not -type d -exec sh -c 'diff -u {} "$$HOME/$$(echo "{}" | sed 's@^dotfiles/@@')"' \;
@@ -70,7 +70,7 @@ install:
 
 install-etc:
 	mkdir -p ${DESTDIR}/etc
-	cp -rf etc/* ${DESTDIR}/etc/
+	cp -rf etc/common/* etc/$$(uname)/* ${DESTDIR}/etc/
 
 install-user:
 	find dotfiles -mindepth 1 -maxdepth 1 | xargs -I '{}' cp -rf '{}' "$$HOME/"
