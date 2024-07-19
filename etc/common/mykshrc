@@ -62,6 +62,9 @@ if [ "$(uname)" = "OpenBSD" ]; then
 	set -A complete_vmctl -- $(vmctl status | awk '!/NAME/{print $NF}')
 fi
 set -A complete_git_1 -- clone init add mv restore rm bisect diff show status branch commit merge rebase reset tag fetch pull push
+if command -v got > /dev/null; then
+	set -A complete_got_1 -- $(got -h 2>&1 | sed -n 's/commands://p')
+fi
 COMMANDS=$(command ls -1 -- $(echo "$PATH" | tr ':' '\n') | sort | uniq)
 set -A complete_doas_1 -- ${COMMANDS}
 set -A complete_which -- ${COMMANDS}
