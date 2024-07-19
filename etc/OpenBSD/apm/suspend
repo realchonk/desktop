@@ -1,2 +1,3 @@
 #!/bin/sh
 pkill -USR1 xidle
+umount -f /mnt/data
