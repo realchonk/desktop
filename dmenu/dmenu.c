@@ -1,4 +1,7 @@
 /* See LICENSE file for copyright and license details. */
+#ifdef __FreeBSD__
+# define __BSD_VISIBLE 1
+#endif
 #include <ctype.h>
 #include <locale.h>
 #include <math.h>
