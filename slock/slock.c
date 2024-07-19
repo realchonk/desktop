@@ -1,4 +1,8 @@
 /* See LICENSE file for license details. */
+#ifdef __FreeBSD__
+# define __BSD_VISIBLE 1
+#endif
+
 #define _XOPEN_SOURCE 500
 #if HAVE_SHADOW_H
 #include <shadow.h>
@@ -30,7 +34,6 @@
 #include <time.h>
 
 #include "arg.h"
-#include "util.h"
 
 char *argv0;
 

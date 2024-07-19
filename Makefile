@@ -20,7 +20,7 @@ SRC_STEST	= dmenu/stest.c
 HDR_STEST	= dmenu/arg.h
 
 SRC_SLOCK	= slock/slock.c
-HDR_SLOCK	= slock/arg.h slock/config.h slock/util.h
+HDR_SLOCK	= slock/arg.h slock/config.h
 
 SRC_PD2 =	pinentry-dmenu2.sh
 
