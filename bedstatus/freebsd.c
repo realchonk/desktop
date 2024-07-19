@@ -42,6 +42,9 @@ static bool cpu_usage (int *usage)
 	if (old == NULL)
 		return false;
 
+	// TODO
+	(void)len;
+	(void)usage;
 
 	return false;
 }
