@@ -22,30 +22,11 @@ HDR_STEST	= dmenu/arg.h
 SRC_SLOCK	= slock/slock.c
 HDR_SLOCK	= slock/arg.h slock/config.h slock/util.h
 
-SRC_PD		= pinentry-dmenu/pinentry-dmenu.c		\
-		  pinentry-dmenu/drw.c				\
-		  pinentry-dmenu/util.c				\
-		  pinentry-dmenu/pinentry/pinentry.c		\
-		  pinentry-dmenu/pinentry/util.c		\
-		  pinentry-dmenu/pinentry/password-cache.c	\
-		  pinentry-dmenu/pinentry/argparse.c		\
-		  pinentry-dmenu/pinentry/secmem.c
-HDR_PD		= master.h					\
-		  pinentry-dmenu/config.h			\
-		  pinentry-dmenu/drw.h				\
-		  pinentry-dmenu/util.h				\
-		  pinentry-dmenu/pinentry/argparse.h		\
-		  pinentry-dmenu/pinentry/memory.h		\
-		  pinentry-dmenu/pinentry/util.h		\
-		  pinentry-dmenu/pinentry/password-cache.h	\
-		  pinentry-dmenu/pinentry/secmem-util.h		\
-		  pinentry-dmenu/pinentry/pinentry.h
-
 SRC_PD2 =	pinentry-dmenu2.sh
 
-MAN		= dwm/dwm.1 st/st.1 dmenu/dmenu.1 dmenu/stest.1 slock/slock.1 pinentry-dmenu/pinentry-dmenu.1
+MAN		= dwm/dwm.1 st/st.1 dmenu/dmenu.1 dmenu/stest.1 slock/slock.1
 
-all: bin/dwm bin/st bin/bedstatus bin/dmenu bin/stest bin/xbgcd bin/slock bin/pinentry-dmenu bin/pinentry-dmenu2
+all: bin/dwm bin/st bin/bedstatus bin/dmenu bin/stest bin/xbgcd bin/slock bin/pinentry-dmenu2
 
 check:
 	find etc/common etc/$$(uname) -not -type d | awk '{a=$$0; sub(/etc\/[^\/]+/, "/etc", a); system("diff -u " $$0 " " a)}'
@@ -106,10 +87,6 @@ bin/xbgcd: xbgcd/xbgcd.c xbgcd/config.h
 bin/slock: ${SRC_SLOCK} ${HDR_SLOCK}
 	@mkdir -p bin
 	${CC} -o $@ ${SRC_SLOCK} ${CFLAGS} `pkg-config --cflags --libs x11 xext xrandr` -lpthread
-
-bin/pinentry-dmenu: ${SRC_PD} ${HDR_PD}
-	@mkdir -p bin
-	${CC} -o $@ ${SRC_PD} ${CFLAGS} `pkg-config --cflags --libs libassuan gpg-error fontconfig freetype2 x11 xft xinerama`
 
 bin/pinentry-dmenu2: ${SRC_PD2}
 	@mkdir -p bin
