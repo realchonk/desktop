@@ -81,7 +81,11 @@ gd() {
 }
 
 gl() {
-	got log -d "$@" | less
+	got log -d "$@" | bat -l gitlog
+}
+
+gls() {
+	got log -s "$@" | less
 }
 
 _gu_do() {
