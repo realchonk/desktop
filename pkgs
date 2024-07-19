@@ -7,7 +7,7 @@ emacs--gtk3%emacs
 extra-cmake-modules--
 firefox--
 font-awesome--
-git--
+got--
 gnuplot--
 graphviz--
 htop--
@@ -21,7 +21,6 @@ mpv--
 nasm--
 ncdu--
 neofetch--
-nmap--
 nsxiv--
 obsdfreqd--
 pass-otp--
