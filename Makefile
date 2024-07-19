@@ -41,10 +41,11 @@ HDR_PD		= master.h					\
 		  pinentry-dmenu/pinentry/secmem-util.h		\
 		  pinentry-dmenu/pinentry/pinentry.h
 
+SRC_PD2 =	pinentry-dmenu2.sh
 
 MAN		= dwm/dwm.1 st/st.1 dmenu/dmenu.1 dmenu/stest.1 slock/slock.1 pinentry-dmenu/pinentry-dmenu.1
 
-all: bin/dwm bin/st bin/bedstatus bin/dmenu bin/stest bin/xbgcd bin/slock bin/pinentry-dmenu
+all: bin/dwm bin/st bin/bedstatus bin/dmenu bin/stest bin/xbgcd bin/slock bin/pinentry-dmenu bin/pinentry-dmenu2
 
 check:
 	find etc/common etc/$$(uname) -not -type d | awk '{a=$$0; sub(/etc\/[^\/]+/, "/etc", a); system("diff -u " $$0 " " a)}'
@@ -109,5 +110,10 @@ bin/slock: ${SRC_SLOCK} ${HDR_SLOCK}
 bin/pinentry-dmenu: ${SRC_PD} ${HDR_PD}
 	@mkdir -p bin
 	${CC} -o $@ ${SRC_PD} ${CFLAGS} `pkg-config --cflags --libs libassuan gpg-error fontconfig freetype2 x11 xft xinerama`
+
+bin/pinentry-dmenu2: ${SRC_PD2}
+	@mkdir -p bin
+	cp -f ${SRC_PD2} $@
+	chmod +x $@
 
 .PHONY: all clean install
