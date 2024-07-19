@@ -1,0 +1,40 @@
+This is my custom desktop environment, that I use on most of my machines.
+
+# Components
+
+## patches suckless software
+- [dwm](https://dwm.suckless.org)
+- [dmenu](https://tools.suckless.org/dmenu)
+- [slock](https://tools.suckless.org/slock)
+- [st](https://tools.suckless.org/st)
+
+## my own software
+- bedstatus
+- xbgcd
+- pinentry-dmenu2
+- various scripts
+- my personal dotfiles
+- /etc files
+
+# Build Dependencies
+- libX11
+- libXext
+- libXft
+- libXinerama
+- libXrandr
+- libXrender
+- libfontconfig
+- libfreetype2
+
+# Optional Runtime Dependencies
+- font-awesome (for icons in bedstatus)
+- htop (Super+Ctrl+H)
+- libqalculate (Super+C)
+- password-store
+- xdotool
+
+# Installation
+First install all dependencies.
+
+ $ make
+ # make install
