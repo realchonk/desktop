@@ -29,7 +29,7 @@ list() {
 		cat "$cache"
 	elif [ -e "$dir/.gpg-id" ]; then
 		cd "$dir"
-		find . -type f -name '*.gpg' | sed 's/^\.\/\(.*\)\.gpg/\1/' | tee "$cache"
+		find . -type f -name '*.gpg' | sed 's/^\.\/\(.*\)\.gpg/\1/' | sort | tee "$cache"
 	else
 		echo 'Password Store is empty'
 	fi
