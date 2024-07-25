@@ -24,7 +24,14 @@ Suspend)
 	esac
 	;;
 Shutdown)
-	doas shutdown -p now
+	case "$(uname)" in
+	OpenBSD|FreeBSD)
+		doas shutdown -p now
+		;;
+	Linux)
+		doas poweroff
+		;;
+	esac
 	;;
 Reboot)
 	doas reboot
