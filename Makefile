@@ -24,9 +24,21 @@ HDR_SLOCK	= slock/arg.h slock/config.h
 
 SRC_PD2 =	pinentry-dmenu2.sh
 
-MAN		= dwm/dwm.1 st/st.1 dmenu/dmenu.1 dmenu/stest.1 slock/slock.1
+SRC_NETRIS	= netris/input.c				\
+		  netris/screen.c				\
+		  netris/shapes.c				\
+		  netris/scores.c				\
+		  netris/tetris.c
 
-all: bin/dwm bin/st bin/bedstatus bin/dmenu bin/stest bin/xbgcd bin/slock bin/pinentry-dmenu2
+HDR_NETRIS	= netris/input.h				\
+		  netris/pathnames.h				\
+		  netris/scores.h				\
+		  netris/screen.h				\
+		  netris/tetris.h
+
+MAN		= dwm/dwm.1 st/st.1 dmenu/dmenu.1 dmenu/stest.1 slock/slock.1 netris/netris.6
+
+all: bin/dwm bin/st bin/bedstatus bin/dmenu bin/stest bin/xbgcd bin/slock bin/pinentry-dmenu2 bin/netris
 
 check:
 	find etc/common etc/$$(uname) -not -type d | awk '{a=$$0; sub(/etc\/[^\/]+/, "/etc", a); system("diff -u " $$0 " " a)}'
@@ -38,7 +50,11 @@ clean:
 	rm -rf bin
 
 install:
-	mkdir -p ${DESTDIR}${PREFIX}/bin ${DESTDIR}${MANPREFIX}/man1 ${DESTDIR}${SCRIPTDIR}
+	mkdir -p	${DESTDIR}${PREFIX}/bin		\
+			${DESTDIR}${MANPREFIX}/man1	\
+			${DESTDIR}${MANPREFIX}/man6	\
+			${DESTDIR}${SCRIPTDIR}		\
+			${DESTDIR}${GAMESDIR}
 	cp -f bin/* ${DESTDIR}${PREFIX}/bin/
 	for f in scripts/*; do										\
 		sed 's#@PREFIX@#${PREFIX}#g; s#@SCRIPTS@#${SCRIPTDIR}#; s#@TERM@#${TERM}#' < $$f 	\
@@ -46,9 +62,14 @@ install:
 		chmod +x ${DESTDIR}${SCRIPTDIR}/$$(basename $$f);					\
 	done
 	for f in ${MAN}; do										\
-		sed 's/VERSION/${VERSION}/g' < $$f > ${DESTDIR}${MANPREFIX}/man1/$$(basename "$$f");	\
+		s=$$(echo "$$f" | sed 's/^[^.]*.\([0-9]\)$$/\1/');					\
+		sed 's/VERSION/${VERSION}/g' < $$f > ${DESTDIR}${MANPREFIX}/man$$s/$$(basename "$$f");	\
 	done
+	touch ${DESTDIR}${GAMESDIR}/netris.scores
+	chgrp games ${DESTDIR}${PREFIX}/bin/netris ${DESTDIR}${GAMESDIR}/netris.scores
 	chmod u+s ${DESTDIR}${PREFIX}/bin/slock
+	chmod g+s ${DESTDIR}${PREFIX}/bin/netris
+	chmod g+rw ${DESTDIR}${GAMESDIR}/netris.scores
 
 install-etc:
 	mkdir -p ${DESTDIR}/etc
@@ -92,5 +113,9 @@ bin/pinentry-dmenu2: ${SRC_PD2}
 	@mkdir -p bin
 	cp -f ${SRC_PD2} $@
 	chmod +x $@
+
+bin/netris: ${SRC_NETRIS} ${HDR_NETRIS}
+	@mkdir -p bin
+	${CC} -o $@ ${SRC_NETRIS} ${CFLAGS} `pkg-config --cflags --libs ncurses`
 
 .PHONY: all clean install

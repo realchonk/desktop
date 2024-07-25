@@ -2,7 +2,7 @@ This is my custom desktop environment, that I use on most of my machines.
 
 # Components
 
-## patches suckless software
+## patched suckless software
 - [dwm](https://dwm.suckless.org)
 - [dmenu](https://tools.suckless.org/dmenu)
 - [slock](https://tools.suckless.org/slock)
@@ -12,6 +12,7 @@ This is my custom desktop environment, that I use on most of my machines.
 - bedstatus
 - xbgcd
 - pinentry-dmenu2
+- netris (fork of NetBSD's tetris(6))
 - various scripts
 - my personal dotfiles
 - /etc files

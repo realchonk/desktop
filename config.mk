@@ -1,6 +1,7 @@
 PREFIX = /usr/local
 MANPREFIX = ${PREFIX}/man
 SCRIPTDIR = ${PREFIX}/libexec/desktop
+GAMESDIR = /var/games
 TERM = st
 
 VERSION = "benni-0.1"
