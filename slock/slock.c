@@ -1,6 +1,5 @@
 /* See LICENSE file for license details. */
-#ifdef __FreeBSD__
-# define __BSD_VISIBLE 1
+#ifdef __OpenBSD__
 # define HAVE_BSD_AUTH 1
 #endif
 
@@ -12,7 +11,6 @@
 # include <shadow.h>
 #endif
 
-#include <stdnoreturn.h>
 #include <ctype.h>
 #include <errno.h>
 #include <grp.h>
@@ -64,7 +62,8 @@ struct xrandr {
 
 #include "config.h"
 
-static noreturn void
+[[noreturn]]
+static void
 die(const char *errstr, ...)
 {
 	va_list ap;

@@ -54,12 +54,12 @@
 #define sigmask(s) (1 << ((s) - 1))
 #endif
 
+#include "screen.h"
+#include "tetris.h"
+
 #ifdef __linux__
 # define OXTABS XTABS
 #endif
-
-#include "screen.h"
-#include "tetris.h"
 
 static cell curscreen[B_SIZE];	/* 1 => standout (or otherwise marked) */
 static int curscore;
@@ -71,7 +71,6 @@ static	void	scr_stop(int);
 static	void	stopset(int) __dead;
 
 extern int ospeed;
-
 
 /*
  * Routine used by tputs().

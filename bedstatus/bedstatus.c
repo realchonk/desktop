@@ -1,6 +1,3 @@
-#ifdef __FreeBSD__
-# define __BSD_VISIBLE 1
-#endif
 #include <X11/Xlib.h>
 #include <unistd.h>
 #include <stdarg.h>

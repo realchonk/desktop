@@ -4,10 +4,6 @@
  * between steps to get the new background color. If the substep reaches 1.0f,
  * it resets it, and starts the next step.
  */
-#ifdef __FreeBSD__
-# define __BSD_VISIBLE 1
-#endif
-
 #include <X11/Xlib.h>
 #include <unistd.h>
 #include <stdint.h>
