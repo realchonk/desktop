@@ -113,6 +113,9 @@ static bool cpu_usage (int *usage)
 		total += diff.times[i];
 	}
 
+	if (total == 0)
+		return false;
+
 	*usage = 100 - 100 * diff.times[3] / total;
 	old = new;
 	return true;
@@ -155,6 +158,10 @@ void init_backend (void)
 	stat = fopen ("/proc/stat", "r");
 	ncpu = get_nprocs_conf ();
 	cpufreqs = calloc (ncpu, sizeof (FILE *));
+
+	// disable buffering
+	setvbuf (meminfo, NULL, _IONBF, 0);
+	setvbuf (stat, NULL, _IONBF, 0);
 
 	for (int i = 0; i < ncpu; ++i) {
 		snprintf (path, sizeof (path), "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq", i);
