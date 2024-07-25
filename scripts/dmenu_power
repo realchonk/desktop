@@ -1,14 +1,19 @@
 #!/bin/sh
 
-case "$(printf 'Lock\nSuspend\nShutdown\nReboot\nHibernate\n' | dmenu -l 5 "$@")" in
-Lock)
+lock() {
 	if pgrep xidle > /dev/null; then
 		pkill -USR1 xidle
 	else
 		slock
 	fi
+}
+
+case "$(printf 'Lock\nSuspend\nShutdown\nReboot\nHibernate\n' | dmenu -l 5 "$@")" in
+Lock)
+	lock
 	;;
 Suspend)
+	lock
 	case "$(uname)" in
 	OpenBSD|FreeBSD)
 		doas zzz
@@ -25,6 +30,7 @@ Reboot)
 	doas reboot
 	;;
 Hibernate)
+	lock
 	case "$(uname)" in
 	OpenBSD)
 		ZZZ
