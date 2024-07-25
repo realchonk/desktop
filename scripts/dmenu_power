@@ -17,6 +17,7 @@ Suspend)
 		systemctl suspend
 		;;
 	esac
+	;;
 Shutdown)
 	doas shutdown -p now
 	;;
