@@ -4,10 +4,13 @@ case "$(command -v vim)" in
 *)		VIM=vi	;;
 esac
 
-case "$(command -v colorls)" in
-*/colorls)	LS=colorls	;;
-*)		LS=ls		;;
-esac
+if command -v colorls; then
+	LS=colorls
+elif [ "$(uname)" = 'Linux' ]; then
+	LS='ls --color=always'
+else
+	LS=ls
+fi
 
 case "$(command -v unzip)" in
 */unzip)	;;
@@ -60,6 +63,12 @@ if [ "$(uname)" = "OpenBSD" ]; then
 	set -A complete_vmctl_1 -- console create pause reload start status stop unpause wait
 	set -A complete_vmctl -- $(vmctl status | awk '!/NAME/{print $NF}')
 fi
+
+if [ "$(uname)" = "OpenBSD" ] || [ "$(uname)" = "FreeBSD" ]; then
+	set -A complete_ifconfig_1 -- $(ifconfig | grep -o '^[a-z0-9]*')
+	set -A complete_ifconfig -- up down join nwid wpakey autoconf -inet -inet6
+fi
+
 set -A complete_git_1 -- clone init add mv restore rm bisect diff show status branch commit merge rebase reset tag fetch pull push
 if command -v got > /dev/null; then
 	set -A complete_got_1 -- $(got -h 2>&1 | sed -n 's/commands://p')
@@ -68,8 +77,6 @@ COMMANDS=$(command ls -1 -- $(echo "$PATH" | tr ':' '\n') | sort | uniq)
 set -A complete_doas_1 -- ${COMMANDS}
 set -A complete_which -- ${COMMANDS}
 set -A complete_exec -- ${COMMANDS}
-set -A complete_ifconfig_1 -- $(ifconfig | grep -o '^[a-z0-9]*')
-set -A complete_ifconfig -- up down join nwid wpakey autoconf -inet -inet6
 set -A complete_pass_1 -- show generate ls edit git rm cp mv
 #set -A complete_pass -- $(cd $HOME/.password-store && find . -type f -name '*.gpg' | sed 's/^\.\///; s/\.gpg$//')
 
