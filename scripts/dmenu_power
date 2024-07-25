@@ -2,11 +2,21 @@
 
 case "$(printf 'Lock\nSuspend\nShutdown\nReboot\nHibernate\n' | dmenu -l 5 "$@")" in
 Lock)
-	slock
+	if pgrep xidle > /dev/null; then
+		pkill -USR1 xidle
+	else
+		slock
+	fi
 	;;
 Suspend)
-	doas zzz
-	;;
+	case "$(uname)" in
+	OpenBSD|FreeBSD)
+		doas zzz
+		;;
+	Linux)
+		systemctl suspend
+		;;
+	esac
 Shutdown)
 	doas shutdown -p now
 	;;
@@ -14,6 +24,13 @@ Reboot)
 	doas reboot
 	;;
 Hibernate)
-	ZZZ
+	case "$(uname)" in
+	OpenBSD)
+		ZZZ
+		;;
+	Linux)
+		systemctl hibernate
+		;;
+	esac
 	;;
 esac
