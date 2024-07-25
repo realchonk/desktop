@@ -17,7 +17,6 @@ esac
 export EDITOR=$VIM
 export FCEDIT=$EDITOR
 export PAGER=less
-export LANG=de_DE.UTF-8
 export LC_CTYPE=en_US.UTF-8
 export CLICOLOR=1
 export TOG_COLORS=1
