@@ -1,6 +1,11 @@
 /* user and group to drop privileges to */
 static const char *user  = "nobody";
+
+#ifdef __linux__
+static const char *group = "nobody";
+#else
 static const char *group = "nogroup";
+#endif
 
 static const char *colorname[NUMCOLS] = {
 	[INIT] =   "black",     /* after initialization */

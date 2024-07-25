@@ -1,13 +1,18 @@
 /* See LICENSE file for license details. */
 #ifdef __FreeBSD__
 # define __BSD_VISIBLE 1
+# define HAVE_BSD_AUTH 1
 #endif
 
-#define _XOPEN_SOURCE 500
+#ifdef __linux__
+# define HAVE_SHADOW_H 1
+#endif
+
 #if HAVE_SHADOW_H
-#include <shadow.h>
+# include <shadow.h>
 #endif
 
+#include <stdnoreturn.h>
 #include <ctype.h>
 #include <errno.h>
 #include <grp.h>
@@ -25,8 +30,8 @@
 #include <X11/Xutil.h>
 
 #if HAVE_BSD_AUTH
-#include <login_cap.h>
-#include <bsd_auth.h>
+# include <login_cap.h>
+# include <bsd_auth.h>
 #endif
 
 /*POSIX threading for auto-timeout*/
@@ -59,7 +64,7 @@ struct xrandr {
 
 #include "config.h"
 
-static void
+static noreturn void
 die(const char *errstr, ...)
 {
 	va_list ap;
