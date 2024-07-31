@@ -179,14 +179,33 @@ static char *bat_read (const struct bat *bat, const char *name)
 	return s;
 }
 
+static long long bat_parse (const struct bat *bat, const char *name)
+{
+	char *s, *endp;
+	long long x;
+
+	s = bat_read (bat, name);
+	if (s == NULL)
+		return -1;
+
+	x = strtoll (s, &endp, 10);
+	if (*endp != '\n' && *endp != '\0')
+		return -1;
+
+	return x;
+}
+
 static void bat (struct status *st)
 {
-	unsigned long nowsum = 0, fullsum = 0;
+	unsigned long long now = 0;
+	unsigned long long full = 0;
+
+	st->power = 0;
 
 	for (int i = 0; i < nbat; ++i) {
 		const struct bat *bat = &bats[i];
-		unsigned long full, now;
-		char *s, *endp;
+		long long n, f, v, c;
+		char *s;
 
 		s = bat_read (bat, "status");
 		if (s != NULL) {
@@ -194,29 +213,34 @@ static void bat (struct status *st)
 			st->bat_charging |= (strcmp (s, "Charging\n") == 0);
 		}
 
-		s = bat_read (bat, "charge_now");
-		if (s == NULL)
+		v = bat_parse (bat, "voltage_now");
+		if (v < 0)
 			continue;
 
-		now = strtoul (s, &endp, 10);
-		if (*endp != '\n')
-			continue;
+		c = bat_parse (bat, "current_now");
+		n = bat_parse (bat, "charge_now");
+		f = bat_parse (bat, "charge_full");
 
-		s = bat_read (bat, "charge_full");
-		if (s == NULL)
-			continue;
+		if (n >= 0 && f > 0) {
+			st->has_bat_perc = true;
+			full += f / 1000 * v / 1000000;
+			now += n / 1000 * v / 1000000;
+		}
 
-		full = strtoul (s, &endp, 10);
-		if (*endp != '\n' || full == 0)
-			continue;
-
-		nowsum += now;
-		fullsum += full;
-		st->has_bat_perc = true;
+		if (c >= 0) {
+			st->has_power = true;
+			st->power += c / 1000 * v / 1000000;
+		}
 	}
 
 	if (st->has_bat_perc)
-		st->bat_perc = nowsum * 100 / fullsum;
+		st->bat_perc = now * 100 / full;
+
+	if (st->has_bat_perc && st->has_power) {
+		st->has_bat_rem = true;
+		st->bat_rem = now / st->power * 60;
+	}
+
 }
 
 void init_backend (void)
@@ -261,6 +285,5 @@ void update_status (struct status *st)
 	st->has_mem_usage = mem_usage (&st->mem_usage);
 	st->has_cpu_usage = cpu_usage (&st->cpu_usage);
 	st->has_cpu_speed = cpu_speed (&st->cpu_speed);
-
 	bat (st);
 }
