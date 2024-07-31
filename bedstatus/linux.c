@@ -1,17 +1,24 @@
 #include <sys/sysinfo.h>
 #include <string.h>
 #include <stdio.h>
+#include <fcntl.h>
 #include <ctype.h>
 #include "bedstatus.h"
 
 #define NTIMES 9
+#define MAXBATS 4
+
+struct bat {
+	int dirfd;
+};
 
 struct cpu_times {
 	uint64_t times[NTIMES];
 };
 
-static int ncpu;
+static int ncpu, nbat;
 static FILE *meminfo, *stat, **cpufreqs;
+static struct bat bats[MAXBATS];
 
 static bool parse_meminfo_line (char *line, const char *name, uint64_t *value)
 {
@@ -150,6 +157,69 @@ static bool cpu_speed (int *speed)
 	return true;
 }
 
+static char *bat_read (const struct bat *bat, const char *name)
+{
+	static char buf[100];
+	FILE *file;
+	char *s;
+	int fd;
+
+	fd = openat (bat->dirfd, name, O_RDONLY);
+	if (fd < 0)
+		return NULL;
+
+	file = fdopen (fd, "r");
+	if (file == NULL) {
+		close (fd);
+		return NULL;
+	}
+
+	s = fgets (buf, sizeof (buf), file);
+	fclose (file);
+	return s;
+}
+
+static void bat (struct status *st)
+{
+	unsigned nowsum = 0, fullsum = 0;
+	st->has_bat_charging = false;
+
+	for (int i = 0; i < nbat; ++i) {
+		const struct bat *bat = &bats[i];
+		unsigned long full, now;
+		char *s, *endp;
+
+		s = bat_read (bat, "status");
+		if (s != NULL) {
+			st->has_bat_charging = true;
+			st->bat_charging |= (strcmp (s, "Charging\n") == 0);
+		}
+
+		s = bat_read (bat, "charge_now");
+		if (s == NULL)
+			continue;
+
+		now = strtoul (s, &endp, 10);
+		if (*endp != '\n')
+			continue;
+
+		s = bat_read (bat, "charge_full");
+		if (s == NULL)
+			continue;
+
+		full = strtoul (s, &endp, 10);
+		if (*endp != '\n' || full == 0)
+			continue;
+
+		nowsum += now;
+		fullsum += full;
+		st->has_bat_perc = true;
+	}
+
+	if (st->has_bat_perc)
+		st->bat_perc = nowsum * 100 / fullsum;
+}
+
 void init_backend (void)
 {
 	char path[256];
@@ -167,6 +237,22 @@ void init_backend (void)
 		snprintf (path, sizeof (path), "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq", i);
 		cpufreqs[i] = fopen (path, "r");
 	}
+
+	nbat = 0;
+	for (int i = 0; i < MAXBATS; ++i) {
+		struct bat *bat;
+		char *path = NULL;
+		
+		bat = &bats[nbat];
+		memset (bat, 0, sizeof (*bat));
+
+		asprintf (&path, "/sys/class/power_supply/BAT%d", i);
+		bat->dirfd = open (path, O_DIRECTORY | O_RDONLY);
+		free (path);
+
+		if (bat->dirfd > 0)
+			++nbat;
+	}
 }
 
 void update_status (struct status *st)
@@ -176,4 +262,6 @@ void update_status (struct status *st)
 	st->has_mem_usage = mem_usage (&st->mem_usage);
 	st->has_cpu_usage = cpu_usage (&st->cpu_usage);
 	st->has_cpu_speed = cpu_speed (&st->cpu_speed);
+
+	bat (st);
 }
