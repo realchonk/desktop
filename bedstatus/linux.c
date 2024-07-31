@@ -182,7 +182,6 @@ static char *bat_read (const struct bat *bat, const char *name)
 static void bat (struct status *st)
 {
 	unsigned long nowsum = 0, fullsum = 0;
-	st->has_bat_charging = false;
 
 	for (int i = 0; i < nbat; ++i) {
 		const struct bat *bat = &bats[i];
