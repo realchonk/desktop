@@ -27,10 +27,15 @@
 #define SYM_BAT_FULL "\uf240 "
 #define SYM_TMR "\uf253 "
 
+#define COLOR_NORMAL "\x01"
+#define COLOR_WARN "\x03"
+#define COLOR_URGENT "\x04"
+
 static size_t pos;
 static char buf[256];
 static char *timerpath;
 static int timer_ttl = 0;
+static const char *blink;
 
 static void sig_reset (int sig)
 {
@@ -161,8 +166,23 @@ static void append_duration (const time_t sec)
 
 static void format_bat (const struct status *st)
 {
+	const char *reset = "";
+
 	if (!st->has_bat_charging && !st->has_bat_perc && !st->has_bat_rem && !st->has_power)
 		return;
+
+	if (st->has_bat_perc && (!st->has_bat_charging || !st->bat_charging)) {
+		reset = COLOR_NORMAL;
+		if (st->bat_perc < 10) {
+			append (blink);
+		} else if (st->bat_perc < 20) {
+			append (COLOR_URGENT);
+		} else if (st->bat_perc < 30) {
+			append (COLOR_WARN);
+		} else {
+			reset = "";
+		}
+	}
 
 	append ("[BAT ");
 
@@ -205,7 +225,7 @@ static void format_bat (const struct status *st)
 	if (st->has_bat_perc && (st->has_bat_rem || st->has_power))
 		append (")");
 
-	append ("] ");
+	append ("]%s ", reset);
 }
 
 static time_t fetch_timer (void)
@@ -245,12 +265,24 @@ fail:
 static void format_timer (void)
 {
 	time_t now, diff, timer = fetch_timer ();
+	const char *reset = COLOR_NORMAL;
 
 	if (timer == 0)
 		return;
 
 	now = time (NULL);
 	diff = timer - now;
+
+	if (diff < 30) {
+		append (blink);
+	} else if (diff < 60) {
+		append (COLOR_URGENT);
+	} else if (diff < 120) {
+		append (COLOR_WARN);
+	} else {
+		reset = "";
+	}
+
 	append ("[TMR " SYM_TMR);
 
 	if (diff >= 0) {
@@ -261,7 +293,7 @@ static void format_timer (void)
 		append ("%s", elapsed);
 	}
 
-	append ("] ");
+	append ("]%s ", reset);
 }
 
 static void format_time (void)
@@ -315,6 +347,8 @@ int main (int argc, char *argv[])
 
 	while (1) {
 		struct status st;
+
+		blink = (time (NULL) & 1) ? COLOR_WARN : COLOR_URGENT;
 
 		update_status (&st);
 		pos = 0;
