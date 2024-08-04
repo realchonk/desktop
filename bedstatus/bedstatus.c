@@ -25,6 +25,7 @@
 #define SYM_BAT_HALF "\uf242 "
 #define SYM_BAT_HIGH "\uf241 "
 #define SYM_BAT_FULL "\uf240 "
+#define SYM_TMR "\uf253 "
 
 static size_t pos;
 static char buf[256];
@@ -250,12 +251,14 @@ static void format_timer (void)
 
 	now = time (NULL);
 	diff = timer - now;
-	append ("[TMR ");
+	append ("[TMR " SYM_TMR);
 
 	if (diff >= 0) {
 		append_duration (diff);
 	} else {
-		append ("ELAPSED");
+		char elapsed[] = "ELAPSED";
+		elapsed[(-diff % 7) + 1] = '\0';
+		append ("%s", elapsed);
 	}
 
 	append ("] ");
