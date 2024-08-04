@@ -60,7 +60,7 @@
 
 /* enums */
 enum { CurNormal, CurResize, CurMove, CurLast }; /* cursor */
-enum { SchemeNorm, SchemeSel }; /* color schemes */
+enum { SchemeNorm, SchemeSel, SchemeWarn, SchemeUrgent, NumSchemes }; /* color schemes */
 enum { NetSupported, NetWMName, NetWMState, NetWMCheck,
        NetWMFullscreen, NetActiveWindow, NetWMWindowType,
        NetWMWindowTypeDialog, NetClientList, NetLast }; /* EWMH atoms */
@@ -744,10 +744,11 @@ dirtomon(int dir)
 void
 drawbar(Monitor *m)
 {
-	int x, w, tw = 0;
+	int ch, tx = 0, x, w, tw = 0;
 	int boxs = drw->fonts->h / 9;
 	int boxw = drw->fonts->h / 6 + 2;
 	unsigned int i, occ = 0, urg = 0;
+	char *ts = stext, *tp = stext;
 	Client *c;
 
 	if (!m->showbar)
@@ -757,7 +758,23 @@ drawbar(Monitor *m)
 	if (m == selmon) { /* status is only drawn on selected monitor */
 		drw_setscheme(drw, scheme[SchemeNorm]);
 		tw = TEXTW(stext) - lrpad + 2; /* 2px right padding */
-		drw_text(drw, m->ww - tw, 0, tw, bh, 0, stext, 0);
+		while (1) {
+			if ((size_t)*ts > LENGTH(colors)) {
+				++ts;
+				continue;
+			}
+
+			ch = *ts;
+			*ts = '\0';
+			drw_text(drw, m->ww - tw + tx, 0, tw - tx, bh, 0, tp, 0);
+			tx += TEXTW(tp) - lrpad;
+			if (ch == '\0')
+				break;
+			drw_setscheme(drw, scheme[(size_t)(ch - 1)]);
+			*ts = ch;
+			++ts;
+			tp = ts;
+		}
 	}
 
 	for (c = m->clients; c; c = c->next) {

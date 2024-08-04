@@ -15,10 +15,14 @@ static const char col_gray2[]		= "#444444";
 static const char col_gray3[]		= "#bbbbbb";
 static const char col_gray4[]		= "#eeeeee";
 static const char col_cyan[]		= "#2255ff";
-static const char *colors[][3]		= {
-	/*               fg         bg         border   */
-	[SchemeNorm] = { col_gray3, col_gray1, col_gray2 },
-	[SchemeSel]  = { col_gray4, col_cyan,  col_cyan  },
+static const char col_yellow[]		= "#ffff00";
+static const char col_red[]		= "#ff0000";
+static const char *colors[][NumSchemes]		= {
+	/*                  fg          bg         border   */
+	[SchemeNorm]	= { col_gray3,  col_gray1, col_gray2 },
+	[SchemeSel]	= { col_gray4,  col_cyan,  col_cyan  },
+	[SchemeWarn]	= { col_yellow, col_gray1, col_gray2 },
+	[SchemeUrgent]	= { col_red,    col_gray1, col_gray2 },
 };
 
 /* tagging */
