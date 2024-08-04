@@ -1,5 +1,6 @@
 #include <X11/Xlib.h>
 #include <unistd.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -27,6 +28,14 @@
 
 static size_t pos;
 static char buf[256];
+static char *timerpath;
+static int timer_ttl = 0;
+
+static void sig_reset (int sig)
+{
+	(void)sig;
+	timer_ttl = 0;
+}
 
 static void append (const char *fmt, ...)
 {
@@ -119,6 +128,36 @@ done:
 	append ("] ");
 }
 
+static void append_duration (const time_t sec)
+{
+	time_t rem = sec;
+	struct unit {
+		char c;
+		time_t v;
+	} units[] = {
+		{ 'd',	24 * 60 * 60 },
+		{ 'h',	     60 * 60 },
+		{ 'm',	      1 * 60 },
+		{ 's',	           1 },
+		{ '\0',	           0 },
+	};
+
+	if (sec == 0) {
+		append ("0s");
+		return;
+	}
+
+	for (size_t i = 0; units[i].v != 0; ++i) {
+		const struct unit u = units[i];
+
+		if (rem < u.v)
+			continue;
+
+		append ("%u%c", rem / u.v, u.c);
+		rem %= u.v;
+	}
+}
+
 static void format_bat (const struct status *st)
 {
 	if (!st->has_bat_charging && !st->has_bat_perc && !st->has_bat_rem && !st->has_power)
@@ -150,26 +189,7 @@ static void format_bat (const struct status *st)
 	}
 
 	if (st->has_bat_rem) {
-		unsigned rem = st->bat_rem;
-		struct unit {
-			char c;
-			unsigned v;
-		} units[] = {
-			{ 'd',	24 * 60 },
-			{ 'h',	     60 },
-			{ 'm',	      1 },
-			{ '\0',	      0 },
-		};
-
-		for (size_t i = 0; units[i].v != 0; ++i) {
-			const struct unit u = units[i];
-
-			if (rem < u.v)
-				continue;
-
-			append ("%u%c", rem / u.v, u.c);
-			rem %= u.v;
-		}
+		append_duration (st->bat_rem * 60);
 
 		if (st->has_power)
 			append ("/");
@@ -183,6 +203,60 @@ static void format_bat (const struct status *st)
 
 	if (st->has_bat_perc && (st->has_bat_rem || st->has_power))
 		append (")");
+
+	append ("] ");
+}
+
+static time_t fetch_timer (void)
+{
+	static time_t timer = 0;
+	char buf[32], *endp, *s;
+	FILE *file;
+
+	if (timer_ttl > 0) {
+		--timer_ttl;
+		return timer;
+	}
+
+	file = fopen (timerpath, "r");
+
+	if (file == NULL)
+		goto fail;
+
+	s = fgets (buf, sizeof (buf), file);
+	fclose (file);
+
+	if (s == NULL)
+		goto fail;
+
+	timer = strtoul (buf, &endp, 10);
+	if (*endp != '\0' && *endp != '\n')
+		goto fail;
+
+	timer_ttl = 30;
+	return timer;
+fail:
+	timer = 0;
+	timer_ttl = 15;
+	return 0;
+}
+
+static void format_timer (void)
+{
+	time_t now, diff, timer = fetch_timer ();
+
+	if (timer == 0)
+		return;
+
+	now = time (NULL);
+	diff = timer - now;
+	append ("[TMR ");
+
+	if (diff >= 0) {
+		append_duration (diff);
+	} else {
+		append ("ELAPSED");
+	}
 
 	append ("] ");
 }
@@ -202,6 +276,7 @@ static void format_status (const struct status *st)
 	format_cpu (st);
 	format_ram (st);
 	format_bat (st);
+	format_timer ();
 	format_time ();
 }
 
@@ -210,6 +285,7 @@ int main (int argc, char *argv[])
 	Display *dpy;
 	int screen;
 	unsigned long root;
+	const char *tmp;
 
 	(void)argv;
 	
@@ -225,6 +301,13 @@ int main (int argc, char *argv[])
 	screen = XDefaultScreen (dpy);
 	root = XRootWindow (dpy, screen);
 
+	tmp = getenv ("XDG_RUNTIME_DIR");
+	if (tmp == NULL)
+		tmp = "/tmp";
+
+	asprintf (&timerpath, "%s/bedstatus-timer", tmp);
+
+	signal (SIGUSR1, sig_reset);
 	init_backend ();
 
 	while (1) {

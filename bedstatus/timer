@@ -1,0 +1,49 @@
+#!/bin/sh
+
+timerfile="${XDG_RUNTIME_DIR}/bedstatus-timer"
+
+usage() {
+	echo "Usage: timer [-r|-s duration]"
+	exit 1
+}
+
+update() {
+	pkill -USR1 bedstatus
+}
+
+set_timer() {
+	dur=$1
+	now=$(date +%s)
+	timer=$((now + dur))
+	echo "$timer" > "$timerfile"
+	update
+}
+
+args=$(getopt 'hs:r' $*)
+[ $? -ne 0 ] && usage
+
+set -- $args
+
+while true; do
+	case "$1" in
+	-r)
+		rm -f "$timerfile"
+		update
+		exit
+		;;
+	-s)
+		set_timer "$2"
+		exit
+		;;
+	--)
+		shift
+		break
+		;;
+	-*)
+		usage
+		exit 1
+		;;
+	esac
+done
+
+cat "$timerfile"
