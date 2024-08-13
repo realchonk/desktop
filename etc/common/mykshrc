@@ -132,6 +132,23 @@ gua() {
 	unset _gu_br _gu_old
 }
 
+gst() {
+	got st "$@" | grep -v '^?'
+}
+
+gcl_ls() {
+	got st "$@" | sed -n '/^? */s///p'
+}
+
+gcl() {
+	gcl_ls
+	printf "Remove? "
+	read yesno
+	[ "$yesno" != 'y' ] && return 1
+
+	gcl_ls | xargs rm -v 
+}
+
 if [ "$TERM" = "xterm" ]; then
 	printf '\e[4?h'
 fi
