@@ -141,12 +141,12 @@ gcl_ls() {
 }
 
 gcl() {
-	gcl_ls
+	gcl_ls "$@"
 	printf "Remove? "
 	read yesno
 	[ "$yesno" != 'y' ] && return 1
 
-	gcl_ls | xargs rm -v 
+	gcl_ls "$@" | xargs rm -v 
 }
 
 if [ "$TERM" = "xterm" ]; then
