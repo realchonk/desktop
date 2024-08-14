@@ -149,6 +149,19 @@ gcl() {
 	gcl_ls "$@" | xargs rm -v 
 }
 
+gcli_ls() {
+	gcl_ls | grep -v '\.vscode'
+}
+
+gcli() {
+	gcli_ls
+	printf "Remove? "
+	read yesno
+	[ "$yesno" != 'y' ] && return 1
+
+	gcli_ls | xargs rm -v 
+}
+
 if [ "$TERM" = "xterm" ]; then
 	printf '\e[4?h'
 fi
