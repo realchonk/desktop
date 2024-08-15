@@ -152,7 +152,7 @@ gcl() {
 }
 
 gcli_ls() {
-	gcl_ls | grep -v '\.vscode'
+	gcl_ls -I | grep -v '\.vscode'
 }
 
 gcli() {
