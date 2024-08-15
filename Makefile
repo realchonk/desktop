@@ -118,7 +118,7 @@ bin/pinentry-dmenu2: ${SRC_PD2}
 
 bin/netris: ${SRC_NETRIS} ${HDR_NETRIS}
 	@mkdir -p bin
-	${CC} -o $@ ${SRC_NETRIS} ${CFLAGS} `pkg-config --cflags --libs ncurses`
+	${CC} -o $@ ${SRC_NETRIS} ${CFLAGS} -lncurses
 
 bin/timer: ${SRC_TMR}
 	@mkdir -p bin
