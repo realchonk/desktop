@@ -164,6 +164,10 @@ gcli() {
 	gcli_ls | xargs rm -v 
 }
 
+gse() {
+	got se -b "$(got br)" "$@"
+}
+
 if [ "$TERM" = "xterm" ]; then
 	printf '\e[4?h'
 fi
