@@ -5,4 +5,7 @@ sndioctl output.mute=1
 sndioctl output.level=0.5
 wsconsctl mouse2.reverse_scrolling=1
 
-! mount | grep -q '/mnt/data' && ping -c1 -w1 192.168.64.10 >/dev/null 2>&1 && mount /mnt/data
+{
+	sleep 5;
+	{ ! mount | grep -q '/mnt/data'; } && ping -c1 -w1 192.168.64.10 >/dev/null 2>&1 && mount /mnt/data
+} &
