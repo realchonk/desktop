@@ -168,6 +168,10 @@ gse() {
 	got se -b "$(got br)" "$@"
 }
 
+rplay() {
+	AUDIODEVICE='snd@192.168.64.7/0' mpv "$@"
+}
+
 if [ "$TERM" = "xterm" ]; then
 	printf '\e[4?h'
 fi
