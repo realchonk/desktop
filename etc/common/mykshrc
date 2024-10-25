@@ -28,6 +28,7 @@ export AUTOCONF_VERSION=2.72
 export AUTOMAKE_VERSION=1.16
 HISTFILE=$HOME/.ksh_history
 HISTSIZE=20000
+RPLAYFLAGS='--cache-secs=10 --stream-buffer-size=1048576'
 
 set -o emacs
 
@@ -64,6 +65,8 @@ if [ "$(uname)" = "OpenBSD" ]; then
 	set -A complete_rcctl_2 -- $(rcctl ls all)
 	set -A complete_vmctl_1 -- console create pause reload start status stop unpause wait
 	set -A complete_vmctl -- $(vmctl status | awk '!/NAME/{print $NF}')
+
+	export LIBCLANG_PATH="/usr/local/llvm16"
 fi
 
 if [ "$(uname)" = "OpenBSD" ] || [ "$(uname)" = "FreeBSD" ]; then
@@ -169,7 +172,11 @@ gse() {
 }
 
 rplay() {
-	AUDIODEVICE='snd@192.168.64.7/0' mpv "$@"
+	AUDIODEVICE='snd@192.168.64.7/0' mpv $RPLAYFLAGS "$@"
+}
+
+hplay() {
+	AUDIODEVICE='snd@192.168.178.59/0' mpv $RPLAYFLAGS "$@"
 }
 
 if [ "$TERM" = "xterm" ]; then
