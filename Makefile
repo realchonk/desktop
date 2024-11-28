@@ -40,7 +40,7 @@ SRC_TMR		= bedstatus/timer
 
 MAN		= dwm/dwm.1 st/st.1 dmenu/dmenu.1 dmenu/stest.1 slock/slock.1 netris/netris.6
 
-all: bin/dwm bin/st bin/bedstatus bin/dmenu bin/stest bin/xbgcd bin/slock bin/pinentry-dmenu2 bin/netris bin/timer
+all: bin/dwm bin/st bin/bedstatus bin/dmenu bin/stest bin/xbgcd bin/slock bin/pinentry-dmenu2 bin/netris bin/timer bin/slowcat
 
 check:
 	find etc/common etc/$$(uname) -not -type d | awk '{a=$$0; sub(/etc\/[^\/]+/, "/etc", a); system("diff -u " $$0 " " a)}'
@@ -124,5 +124,9 @@ bin/timer: ${SRC_TMR}
 	@mkdir -p bin
 	cp -f ${SRC_TMR} $@
 	chmod +x $@
+
+bin/slowcat: slowcat.c
+	@mkdir -p bin
+	${CC} -o $@ slowcat.c ${CFLAGS}
 
 .PHONY: all clean install
