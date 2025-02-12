@@ -8,3 +8,7 @@
 
 # Refactor
 - split common code into a library (drw.c)
+
+# Features
+- notifications
+  - dmenu_pass for *_copy
