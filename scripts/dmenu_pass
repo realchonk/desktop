@@ -4,7 +4,7 @@ dir="$HOME/.password-store"
 cache="$dir/.cache"
 
 usage() {
-	echo "Usage: $0 test|paste|copy|login_enter|login_tab|paste_username|copy_username"
+	echo "Usage: $0 test|paste|copy|login_enter|login_tab|paste_username|copy_username|paste_otp|copy_otp"
 	exit 1
 }
 
@@ -74,6 +74,14 @@ login_enter)
 	paste_enter
 	paste "$password"
 	paste_enter
+	;;
+paste_otp)
+	otp=$(pass otp "$name") || exit 1
+	paste "$otp"
+	paste_enter
+	;;
+copy_otp)
+	pass otp -c "$name"
 	;;
 *)
 	usage
