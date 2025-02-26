@@ -1,9 +1,15 @@
 #!/bin/sh
 
+[ "$1" = '-v' ] && verbose=1
+
 choice=$(man -k . | dmenu -l 20 -p "Manual:" "$@" | sed 's/^\([^(]*\)(\([^)]*\)).*$/\2;\1/')
 [ -z "$choice" ] && exit 1
 
-section=$(echo "$choice" | cut -d ';' -f2)
-page=$(echo "$choice" | cut -d: -f2 | cut -d ';' -f1)
+page=$(echo "$choice" | cut -d ';' -f2 | cut -d ',' -f1)
+section=$(echo "$choice" | cut -d: -f2 | cut -d ';' -f1)
 
+if [ "$verbose" ]; then
+	printf 'section="%s"\n' "$section"
+	printf 'page="%s"\n' "$page"
+fi
 st -- man "$section" "$page"
