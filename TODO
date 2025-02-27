@@ -2,6 +2,8 @@
 - surf
 - tabbed
 - nsxiv
+- xidle (or write replacement)
+- password management tool (without GnuPG)
 
 # Fix
 - dwm: XKeycodeToKeysum
