@@ -1,0 +1,24 @@
+#!/bin/sh
+
+class=$1
+name=$2
+
+handle() {
+	case "$class-$name" in
+	0-ugen*)
+		# PeriPage A6
+		hub=$(dmesg | grep "$name at uhub" | tail -n1 | sed 's/^.*uhub\([0-9]*\).*$/usb\1/')
+		chown benni:benni "/dev/$name".* "/dev/$hub"
+		;;
+	0-uhidev*)
+		echo "XXX uhidev: $name"
+		;;
+	3-*)
+		# network devices
+		sh /etc/netstart "$name"
+		;;
+	esac
+}
+
+
+handle | logger -p daemon.info
