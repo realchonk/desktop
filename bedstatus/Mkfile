@@ -1,5 +1,4 @@
 NAME = bedstatus
-OS != uname
 
 .if "${OS}" == "OpenBSD"
 SRC_OS = openbsd.c

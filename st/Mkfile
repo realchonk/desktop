@@ -1,4 +1,5 @@
 NAME = st
+MAN = 1
 
 FILES != echo *.[ch]
 
