@@ -22,7 +22,7 @@ HDR_STEST	= dmenu/arg.h
 SRC_SLOCK	= slock/slock.c
 HDR_SLOCK	= slock/arg.h slock/config.h
 
-SRC_PD2 =	pinentry-dmenu2.sh
+SRC_PD2		= misc/pinentry-dmenu2.sh
 
 SRC_NETRIS	= netris/input.c				\
 		  netris/screen.c				\
@@ -125,16 +125,16 @@ bin/timer: ${SRC_TMR}
 	cp -f ${SRC_TMR} $@
 	chmod +x $@
 
-bin/flash: flash.c
+bin/flash: misc/flash.c
 	@mkdir -p bin
-	${CC} -o $@ flash.c ${CFLAGS}
+	${CC} -o $@ misc/flash.c ${CFLAGS}
 
-bin/slowcat: slowcat.c
+bin/slowcat: misc/slowcat.c
 	@mkdir -p bin
-	${CC} -o $@ slowcat.c ${CFLAGS}
+	${CC} -o $@ misc/slowcat.c ${CFLAGS}
 
-bin/bidle: bidle.c
+bin/bidle: misc/bidle.c
 	@mkdir -p bin
-	${CC} -o $@ bidle.c ${CFLAGS} `pkg-config --cflags --libs x11 xscrnsaver`
+	${CC} -o $@ misc/bidle.c ${CFLAGS} `pkg-config --cflags --libs x11 xscrnsaver`
 
 .PHONY: all clean install

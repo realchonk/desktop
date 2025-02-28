@@ -1,4 +1,4 @@
-.SUBDIRS: bedstatus dmenu dwm netris scripts slock st xbgcd
+.SUBDIRS: bedstatus dmenu dwm misc netris scripts slock st xbgcd
 
 OS != uname
 
@@ -11,6 +11,8 @@ CONFDIR ?= /etc
 
 ## Defualt terminal
 TERM ?= st
+
+VERSION = "benni-0.8"
 
 ## C Compiler
 CC ?= cc
@@ -34,6 +36,9 @@ install-user:
 	mkdir -p ${DESTDIR}${USERCONFDIR}
 	find dotfiles -mindepth 1 -maxdepth 1 | xargs -I '{}' cp -rf '{}' ${DESTDIR}${USERCONFDIR}/
 
+.sh:
+	sed 's#@VERSION@#${VERSION}#; s#@PREFIX@#${PREFIX}#; s#@TERM@#${TERM}#' $< > $@
+	chmod +x $@
 .c:
 	${CC} -o $@ $< ${CFLAGS} ${CPPFLAGS}
 

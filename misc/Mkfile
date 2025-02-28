@@ -1,0 +1,22 @@
+PROGS =	bidle			\
+	flash			\
+	pinentry-dmenu2		\
+	slowcat
+
+## Installation directory
+PREFIX ?= /usr/local
+
+## Installation directory for binaries
+BINPREFIX ?= ${PREFIX}/bin
+
+all: ${PROGS}
+
+clean:
+	rm -f ${PROGS:F}
+
+install: ${PROGS}
+	mkdir -p ${DESTDIR}${BINPREFIX}
+	cp -f ${PROGS:F} ${DESTDIR}${BINPREFIX}/
+
+bidle: bidle.c
+	${CC} -o $@ bidle.c ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs x11 xscrnsaver`

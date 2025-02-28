@@ -48,8 +48,8 @@ int main (void)
 	XScreenSaverSelectInput (dpy, DefaultRootWindow (dpy), ScreenSaverNotifyMask);
 	XSetScreenSaver (dpy, timeout, 0, DontPreferBlanking, DontAllowExposures);
 	
-	signal (SIGINT, bye);
-	signal (SIGTERM, bye);
+	//signal (SIGINT, bye);
+	//signal (SIGTERM, bye);
 
 	while (1) {
 		XNextEvent (dpy, &ev);
