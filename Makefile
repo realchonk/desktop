@@ -133,4 +133,8 @@ bin/slowcat: slowcat.c
 	@mkdir -p bin
 	${CC} -o $@ slowcat.c ${CFLAGS}
 
+bin/bidle: bidle.c
+	@mkdir -p bin
+	${CC} -o $@ bidle.c ${CFLAGS} `pkg-config --cflags --libs x11 xscrnsaver`
+
 .PHONY: all clean install
