@@ -1,0 +1,20 @@
+SCRIPTS != find . -perm -0755 -and -type f | tr '\n' ' '
+
+## Installation prefix
+PREFIX ?= /usr/local
+
+## Desktop scripts directory
+SCRIPTSDIR = ${PREFIX}/libexec/desktop
+
+all:
+
+clean:
+
+## Install desktop scripts into ${DESTDIR}${SCRIPTSDIR}
+install: ${FILES}
+	mkdir -p ${DESTDIR}${SCRIPTSDIR}
+	for f in ${SCRIPTS}; do								\
+		sed 's#@PREFIX@#${PREFIX}#g; s#@SCRIPTS@#${SCRIPTSDIR}#; s#@TERM@#${TERM}#'	\
+		> ${DESTDIR}${SCRIPTSDIR}/$$(basename "$$f");					\
+		chmod +x ${DESTDIR}${SCRIPTSDIR}/$$(basenae "$$f");				\
+	done

@@ -1,0 +1,12 @@
+NAME = slock
+MAN = 1
+
+CFLAGS += -std=c2x
+
+install-extra: install-bin
+	chmod u+s ${DESTDIR}${BINPREFIX}/slock
+
+slock: slock.c arg.h config.h
+	${CC} -o $@ slock.c ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs x11 xext xrandr` -lpthread
+
+.expand prog

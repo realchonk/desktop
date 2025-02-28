@@ -1,0 +1,8 @@
+NAME = st
+
+FILES != echo *.[ch]
+
+st: ${FILES} ../master.h
+	${CC} -o $@ ${FILES:M*.c} ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs fontconfig freetype2 x11 xft xrender` -lm -lutil
+
+.expand prog

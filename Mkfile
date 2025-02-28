@@ -1,0 +1,44 @@
+.SUBDIRS: bedstatus dmenu dwm netris scripts slock st xbgcd
+
+OS != uname
+
+HOME != echo $$HOME
+## User configuration files directory
+USERCONFDIR ?= ${HOME}
+
+## System configuration files directory
+CONFDIR ?= /etc
+
+## Defualt terminal
+TERM ?= st
+
+## C Compiler
+CC ?= cc
+
+## C Compiler Flags
+CFLAGS ?= -std=c99 -O2 -Wall -Wextra
+
+## C Preprocessor Flags
+CPPFLAGS ?= -DVERSION=\"benni-0.1\" -DPREFIX=\"${PREFIX}\" -DTERM=\"${TERM}\"
+
+.EXPORTS: CC CFLAGS CPPFLAGS OS TERM
+
+## Install system configuration files into ${DESTDIR}${CONFDIR}
+install-etc:
+	mkdir -p ${DESTDIR}${CONFDIR}
+	cp -rf etc/common/* ${DESTDIR}${CONFDIR}/
+	-cp -rf etc/${OS}/* ${DESTDIR}${CONFDIR}/
+
+## Install user configuration files into ${DESTDIR}${USERCONFDIR}
+install-user:
+	mkdir -p ${DESTDIR}${USERCONFDIR}
+	find dotfiles -mindepth 1 -maxdepth 1 | xargs -I '{}' cp -rf '{}' ${DESTDIR}${USERCONFDIR}/
+
+.c:
+	${CC} -o $@ $< ${CFLAGS} ${CPPFLAGS}
+
+.c.o:
+	${CC} -c -o $@ $< ${CFLAGS} ${CPPFLAGS}
+
+include templates.mk
+.expand dir

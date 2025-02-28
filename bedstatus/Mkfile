@@ -1,0 +1,20 @@
+NAME = bedstatus
+OS != uname
+
+.if "${OS}" == "OpenBSD"
+SRC_OS = openbsd.c
+.elif "${OS}" == "FreeBSD"
+SRC_OS = freebsd.c
+.elif "${OS}" == "Linux"
+SRC_OS = linux.c
+.else
+SRC_OS = unsupported.c
+.endif
+
+install-extra: install-bin
+	cp -f timer ${DESTDIR}${PREFIX}/bin/
+
+bedstatus: bedstatus.c ${SRC_OS}
+	${CC} -o $@ $* ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs x11`
+
+.expand prog

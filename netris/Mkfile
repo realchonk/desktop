@@ -1,0 +1,19 @@
+## Location of the games directory
+GAMESDIR = /var/games
+SCORES = ${GAMESDIR}/netris.scores
+NAME = netris
+MAN = 6
+
+FILES != echo *.[ch]
+
+install-extra: install-bin
+	mkdir -p ${DESTDIR}${GAMESDIR}
+	touch ${DESTDIR}${SCORES}
+	-chgrp games ${DESTDIR}${SCORES}
+	chmod g+rw ${DESTDIR}${SCORES}
+	chmod g+s ${DESTDIR}${BINPREFIX}/netris
+
+netris: ${FILES}
+	${CC} -o $@ ${FILES:M*.c} ${CFLAGS} ${CPPFLAGS} -lncurses
+
+.expand prog
