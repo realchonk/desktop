@@ -68,7 +68,7 @@ install:
 		sed 's/VERSION/${VERSION}/g' < $$f > ${DESTDIR}${MANPREFIX}/man$$s/$$(basename "$$f");	\
 	done
 	touch ${DESTDIR}${GAMESDIR}/netris.scores
-	chgrp games ${DESTDIR}${PREFIX}/bin/netris ${DESTDIR}${GAMESDIR}/netris.scores
+	-chgrp games ${DESTDIR}${PREFIX}/bin/netris ${DESTDIR}${GAMESDIR}/netris.scores
 	chmod u+s ${DESTDIR}${PREFIX}/bin/slock
 	chmod g+s ${DESTDIR}${PREFIX}/bin/netris
 	chmod g+rw ${DESTDIR}${GAMESDIR}/netris.scores
