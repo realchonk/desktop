@@ -4,7 +4,7 @@ MAN = 1
 all-extra: stest
 
 clean-extra:
-	rm -f stest
+	rm -f ${.OBJDIR}/stest
 
 install-extra: install-bin install-man stest
 	cp -f ${.OBJDIR}/stest ${DESTDIR}${BINPREFIX}/
