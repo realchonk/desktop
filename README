@@ -18,6 +18,7 @@ This is my custom desktop environment, that I use on most of my machines.
 - /etc files
 
 # Build Dependencies
+- [bmk](https://github.com/realchonk/bmk)
 - libX11
 - libXext
 - libXft
@@ -35,7 +36,12 @@ This is my custom desktop environment, that I use on most of my machines.
 - xdotool
 
 # Installation
-First install all dependencies.
+First install all build dependencies.
+
+ $ mk
+ # mk install
+ 
+## Deprecated: Installation with make(1)
 
  $ make
  # make install
