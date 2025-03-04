@@ -62,13 +62,13 @@ __INSTALL = ${.SUBDIRS:=/install}
 
 .DEFAULT: all
 
-## Build: ${.SUBDIRS}
+## Build: ${.SUBDIRS:J, }
 all: ${.SUBDIRS}
 
-## Clean: ${.SUBDIRS}
+## Clean: ${.SUBDIRS:J, }
 clean: ${__CLEAN}
 
-## Install: ${.SUBDIRS}
+## Install: ${.SUBDIRS:J, }
 install: ${__INSTALL}
 
 . if target(all-extra)

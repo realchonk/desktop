@@ -9,11 +9,14 @@ PREFIX ?= /usr/local
 ## Installation directory for binaries
 BINPREFIX ?= ${PREFIX}/bin
 
+## Build ${PROGS:J, }
 all: ${PROGS}
 
+## Remove build artifacts for ${PROGS:J, }
 clean:
 	rm -f ${PROGS:F}
 
+## Install ${PROGS:J, } into ${DESTDIR}${PREFIX}
 install: ${PROGS}
 	mkdir -p ${DESTDIR}${BINPREFIX}
 	cp -f ${PROGS:F} ${DESTDIR}${BINPREFIX}/
