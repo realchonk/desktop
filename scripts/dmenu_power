@@ -1,16 +1,8 @@
 #!/bin/sh
 
-lock() {
-	if pgrep xidle > /dev/null; then
-		pkill -USR1 xidle
-	else
-		slock
-	fi
-}
-
 case "$(printf 'Lock\nSuspend\nShutdown\nReboot\nHibernate\n' | dmenu -l 5 "$@")" in
 Lock)
-	lock
+	@SCRIPTS@/lock
 	;;
 Suspend)
 	lock
