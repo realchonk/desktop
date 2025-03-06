@@ -4,6 +4,10 @@ SCORES = ${GAMESDIR}/netris.scores
 NAME = netris
 MAN = 6
 
+.if "${OS}" == "Linux"
+LDFLAGS += -lbsd
+.endif
+
 FILES != echo *.[ch]
 
 install-extra: install-bin
