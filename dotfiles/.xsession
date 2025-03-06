@@ -5,7 +5,7 @@
 xset b off
 
 sndioctl output.mute=1
-sndioctl output.level=1
+sndioctl output.level=0.5
 
 if ! pgrep ssh-agent >/dev/null; then
 	eval $(ssh-agent)
