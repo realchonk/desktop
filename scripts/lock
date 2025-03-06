@@ -1,0 +1,7 @@
+#!/bin/sh
+
+if pgrep xidle > /dev/null; then
+	exec pkill -USR1 xidle
+else
+	exec slock
+fi
