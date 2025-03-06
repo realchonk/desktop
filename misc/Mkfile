@@ -22,4 +22,4 @@ install: ${PROGS}
 	cp -f ${PROGS:F} ${DESTDIR}${BINPREFIX}/
 
 bidle: bidle.c
-	${CC} -o $@ bidle.c ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs x11 xscrnsaver`
+	${CC} -o $@ bidle.c ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs x11 xscrnsaver` ${LDFLAGS}

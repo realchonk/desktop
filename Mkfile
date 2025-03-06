@@ -21,7 +21,10 @@ CC ?= cc
 CFLAGS ?= -std=c99 -O2 -Wall -Wextra
 
 ## C Preprocessor Flags
-CPPFLAGS ?= -DVERSION=\"benni-0.1\" -DPREFIX=\"${PREFIX}\" -DTERM=\"${TERM}\"
+CPPFLAGS ?= -DVERSION=\"benni-0.1\" -DPREFIX=\"${PREFIX}\" -DTERM=\"${TERM}\" -D_GNU_SOURCE
+
+## Linker Flags
+LDFLAGS ?=
 
 .EXPORTS: CC CFLAGS CPPFLAGS OS TERM
 
@@ -40,7 +43,7 @@ install-user:
 	sed 's#@VERSION@#${VERSION}#; s#@PREFIX@#${PREFIX}#; s#@TERM@#${TERM}#' $< > $@
 	chmod +x $@
 .c:
-	${CC} -o $@ $< ${CFLAGS} ${CPPFLAGS}
+	${CC} -o $@ $< ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
 
 .c.o:
 	${CC} -c -o $@ $< ${CFLAGS} ${CPPFLAGS}

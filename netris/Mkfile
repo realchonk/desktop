@@ -14,6 +14,6 @@ install-extra: install-bin
 	chmod g+s ${DESTDIR}${BINPREFIX}/netris
 
 netris: ${FILES}
-	${CC} -o $@ ${FILES:M*.c} ${CFLAGS} ${CPPFLAGS} -lncurses
+	${CC} -o $@ ${FILES:M*.c} ${CFLAGS} ${CPPFLAGS} -lncurses ${LDFLAGS}
 
 .expand prog

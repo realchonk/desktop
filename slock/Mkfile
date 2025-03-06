@@ -7,6 +7,6 @@ install-extra: install-bin
 	chmod u+s ${DESTDIR}${BINPREFIX}/slock
 
 slock: slock.c arg.h config.h
-	${CC} -o $@ slock.c ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs x11 xext xrandr` -lpthread
+	${CC} -o $@ slock.c ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs x11 xext xrandr` -lpthread ${LDFLAGS}
 
 .expand prog

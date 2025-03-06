@@ -14,6 +14,6 @@ install-extra: install-bin
 	cp -f timer ${DESTDIR}${PREFIX}/bin/
 
 bedstatus: bedstatus.c ${SRC_OS}
-	${CC} -o $@ $* ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs x11`
+	${CC} -o $@ $* ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs x11` ${LDFLAGS}
 
 .expand prog

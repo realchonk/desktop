@@ -4,6 +4,6 @@ MAN = 1
 FILES != echo *.[ch]
 
 dwm: ${FILES} ../master.h
-	${CC} -o $@ ${FILES:M*.c} ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs fontconfig freetype2 x11 xft xrender`
+	${CC} -o $@ ${FILES:M*.c} ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs fontconfig freetype2 x11 xft xrender` ${LDFLAGS}
 
 .expand prog
