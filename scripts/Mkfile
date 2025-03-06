@@ -16,5 +16,5 @@ install: ${FILES}
 	for f in ${SCRIPTS}; do								\
 		sed 's#@PREFIX@#${PREFIX}#g; s#@SCRIPTS@#${SCRIPTSDIR}#; s#@TERM@#${TERM}#'	\
 		> ${DESTDIR}${SCRIPTSDIR}/$$(basename "$$f");					\
-		chmod +x ${DESTDIR}${SCRIPTSDIR}/$$(basenae "$$f");				\
+		chmod +x ${DESTDIR}${SCRIPTSDIR}/$$(basename "$$f");				\
 	done
