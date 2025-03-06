@@ -1,6 +1,8 @@
 NAME = dmenu
 MAN = 1
 
+CFLAGS += -Wno-sign-compare
+
 all-extra: stest
 
 clean-extra:

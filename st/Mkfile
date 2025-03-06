@@ -1,6 +1,8 @@
 NAME = st
 MAN = 1
 
+CFLAGS += -Wno-sign-compare
+
 FILES != echo *.[ch]
 
 st: ${FILES} ../master.h

@@ -19,7 +19,8 @@ int dofile (FILE *file, unsigned speed)
 	char buf[128];
 	unsigned long long ns;
 	struct timespec ts;
-	int n, div;
+	unsigned div;
+	int n;
 
 	div = speed / 1000;
 	if (div < 1) {

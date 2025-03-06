@@ -38,6 +38,10 @@
 
 #include "arg.h"
 
+#ifndef __unused
+# define __unused
+#endif
+
 char *argv0;
 
 enum {
@@ -352,8 +356,8 @@ main(int argc, char **argv) {
 	struct lock **locks;
 	struct passwd *pwd;
 	struct group *grp;
-	uid_t duid;
-	gid_t dgid;
+	__unused uid_t duid;
+	__unused gid_t dgid;
 #ifndef HAVE_BSD_AUTH
 	const char *hash;
 #endif

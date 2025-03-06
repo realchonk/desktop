@@ -30,7 +30,8 @@ static int usage (void)
 
 static size_t read_all (int fd, char *buffer, size_t num)
 {
-	ssize_t i, n = -1;
+	ssize_t n = -1;
+	size_t i;
 
 	for (i = 0; i < num && n != 0; i += n) {
 		n = read (fd, buffer + i, num - i);
@@ -43,7 +44,8 @@ static size_t read_all (int fd, char *buffer, size_t num)
 
 static void write_all (int fd, const char *buffer, size_t num)
 {
-	ssize_t i, n;
+	ssize_t n;
+	size_t i;
 
 	for (i = 0; i < num; i += n) {
 		n = write (fd, buffer + i, num - i);
