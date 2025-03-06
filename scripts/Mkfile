@@ -7,7 +7,6 @@ PREFIX ?= /usr/local
 SCRIPTSDIR = ${PREFIX}/libexec/desktop
 
 all:
-	@echo SCRIPTS: ${SCRIPTS:J, }
 
 clean:
 
