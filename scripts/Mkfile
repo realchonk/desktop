@@ -1,4 +1,4 @@
-SCRIPTS != find . -perm -0755 -and -type f | tr '\n' ' '
+SCRIPTS != find . -perm -0755 -and -type f -maxdepth 1 | tr '\n' ' '
 
 ## Installation prefix
 PREFIX ?= /usr/local
@@ -7,14 +7,15 @@ PREFIX ?= /usr/local
 SCRIPTSDIR = ${PREFIX}/libexec/desktop
 
 all:
+	@echo SCRIPTS: ${SCRIPTS:J, }
 
 clean:
 
 ## Install desktop scripts into ${DESTDIR}${SCRIPTSDIR}
 install: ${FILES}
 	mkdir -p ${DESTDIR}${SCRIPTSDIR}
-	for f in ${SCRIPTS}; do								\
+	@for f in ${SCRIPTS}; do								\
 		sed 's#@PREFIX@#${PREFIX}#g; s#@SCRIPTS@#${SCRIPTSDIR}#; s#@TERM@#${TERM}#'	\
-		> ${DESTDIR}${SCRIPTSDIR}/$$(basename "$$f");					\
+		< "$$f" > ${DESTDIR}${SCRIPTSDIR}/$$(basename "$$f");				\
 		chmod +x ${DESTDIR}${SCRIPTSDIR}/$$(basename "$$f");				\
 	done
