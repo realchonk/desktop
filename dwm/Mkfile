@@ -3,8 +3,9 @@ MAN = 1
 
 FILES != echo *.[ch]
 CFLAGS += -Wno-sign-compare
+CPPFLAGS += -DXINERAMA
 
 dwm: ${FILES} ../master.h
-	${CC} -o $@ ${FILES:M*.c} ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs fontconfig freetype2 x11 xft xrender` ${LDFLAGS}
+	${CC} -o $@ ${FILES:M*.c} ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs fontconfig freetype2 x11 xft xinerama` ${LDFLAGS}
 
 .expand prog
