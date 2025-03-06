@@ -11,7 +11,12 @@ elif [ -e "$HOME/.kshrc" ]; then
 	ENV="$HOME/.kshrc"
 fi
 
+[ -z "${XDG_RUNTIME_DIR}" ] && export XDG_RUNTIME_DIR="/tmp/$(id -un)"
+mkdir -p "${XDG_RUNTIME_DIR}"
+
 export ENV
 export LANG=en_US.UTF-8
 export GOT_AUTHOR="Benjamin Stürz <benni@stuerz.xyz>"
 export QT_QPA_PLATFORMTHEME=qt5ct
+[ "$(uname)" = 'OpenBSD' ] && export LIBCLANG_PATH=/usr/local/llvm16/lib
+
