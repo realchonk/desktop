@@ -2,6 +2,7 @@ NAME = dmenu
 MAN = 1
 
 CFLAGS += -Wno-sign-compare
+CPPFLAGS += -DXINERAMA
 
 all-extra: stest
 
@@ -13,7 +14,7 @@ install-extra: install-bin install-man stest
 	cp -f stest.1 ${DESTDIR}${MANPREFIX}/
 
 dmenu: arg.h config.h dmenu.c drw.c drw.h util.c util.h ../master.h
-	${CC} -o $@ ${.ALLSRC:M*.c} ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs fontconfig freetype2 x11 xft xrender` -lm ${LDFLAGS}
+	${CC} -o $@ ${.ALLSRC:M*.c} ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs fontconfig freetype2 x11 xft xinerama` -lm ${LDFLAGS}
 
 stest: arg.h stest.c
 	${CC} -o $@ stest.c ${CFLAGS} ${CPPFLAGS} ${LDFLAGS}
