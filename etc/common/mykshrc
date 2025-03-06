@@ -125,6 +125,13 @@ gu() {
 	unset _gu_old _gu_br
 }
 
+gup() {
+	gd > .patch || return 1
+	got rv -R .
+	gu "$@"
+	patch -Np0 < .patch || return 1
+}
+
 gua() {
 	_gu_old=$(got br)
 
