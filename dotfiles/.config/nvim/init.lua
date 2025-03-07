@@ -17,6 +17,7 @@ end
 require "paq" {
 	"savq/paq-nvim",
 	"neovim/nvim-lspconfig",
+	{ "nvim-treesitter/nvim-treesitter", build = ":TSUpdate" },
 }
 
 vim.cmd("PaqInstall")
@@ -46,3 +47,15 @@ vim.cmd("colorscheme vim")
 
 -- Close the completion preview window
 vim.cmd("autocmd! CompleteDone * if pumvisible() == 0 | pclose | endif")
+
+require "nvim-treesitter.configs".setup {
+	ensure_installed = { "c", "lua", "markdown", "markdown_inline", "vim", "vimdoc", "rust", "make", "nasm" },
+	sync_install = true,
+	auto_install = true,
+	ignore_install = {},
+
+	highlight = {
+		enable = true,
+		additional_vim_regex_highlighting = false,
+	},
+}
