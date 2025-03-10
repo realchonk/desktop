@@ -1,5 +1,6 @@
 #!/bin/ksh
 case "$(command -v vim)" in
+*/nvim)		VIM=nvim ;;
 */vim)		VIM=vim	;;
 *)		VIM=vi	;;
 esac
@@ -32,6 +33,7 @@ RPLAYFLAGS='--cache-secs=10 --stream-buffer-size=1048576'
 
 set -o emacs
 
+alias v="$VIM"
 alias t='mkdir -p /tmp/test && cd /tmp/test'
 alias ls="$LS -Fh"
 alias ll="$LS -Fhl"
