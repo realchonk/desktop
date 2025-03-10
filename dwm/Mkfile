@@ -3,7 +3,7 @@ MAN = 1
 
 FILES != echo *.[ch]
 CFLAGS += -Wno-sign-compare
-CPPFLAGS += -DXINERAMA
+CPPFLAGS += -DXINERAMA -DFONT=\"${FONT}:size=${FONT_SIZE_TOPBAR}\"
 
 dwm: ${FILES} ../master.h
 	${CC} -o $@ ${FILES:M*.c} ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs fontconfig freetype2 x11 xft xinerama` ${LDFLAGS}

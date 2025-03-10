@@ -1,7 +1,11 @@
 NAME = st
 MAN = 1
 
+## st font
+ST_FONT = -DFONT=\"${FONT}:pixelsize=${FONT_SIZE_TERM}:antialias=true:autohint=true\"
+
 CFLAGS += -Wno-sign-compare
+CPPFLAGS += ${ST_FONT}
 
 FILES != echo *.[ch]
 

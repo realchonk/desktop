@@ -1,8 +1,14 @@
+-include config.mk.local
+
 PREFIX = /usr/local
 MANPREFIX = ${PREFIX}/man
 SCRIPTDIR = ${PREFIX}/libexec/desktop
 GAMESDIR = /var/games
 TERM = st
+
+FONT ?= Liberation Mono
+FONT_SIZE_TOPBAR ?= 6
+FONT_SIZE_TERM ?= 12
 
 VERSION = "benni-0.1"
 
