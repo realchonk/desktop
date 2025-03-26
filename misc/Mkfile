@@ -1,7 +1,8 @@
 PROGS =	bidle			\
 	flash			\
 	pinentry-dmenu2		\
-	slowcat
+	slowcat			\
+	gurkx
 
 ## Installation directory
 PREFIX ?= /usr/local
