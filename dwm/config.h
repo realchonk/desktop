@@ -33,18 +33,18 @@ static const Rule rules[] = {
 	 *	WM_CLASS(STRING) = instance, class
 	 *	WM_NAME(STRING) = title
 	 */
-	/* class			instance	title	tags mask	isfloating	monitor */
-	{ "Firefox",			NULL,		NULL,	1 << 8,		0,		-1 },
-	{ "firefox",			NULL,		NULL,	1 << 8,		0,		-1 },
-	{ "firefox-default",		NULL,		NULL,	1 << 8,		0,		-1 },
-	{ "tabbed",			NULL,		NULL,	1 << 8,		0,		-1 },
-	{ "thunderbird",		NULL,		NULL,	1 << 7,		0,		-1 },
-	{ "thunderbird-default",	NULL,		NULL,	1 << 7,		0,		-1 },
-	{ "Signal",			NULL,		NULL,	1 << 6,		0,		-1 },
-	{ "discord",			NULL,		NULL,	1 << 5,		0,		-1 },
-	{ NULL,				"ruskbd",	NULL,	0x3ff,		1,		-1 },
-	//{ "Nextcloud",			NULL,		NULL,	1 << 5,		1,		-1 },
-	{ NULL,				"qemu",		NULL,	0,		1,		-1 },
+	/* class			instance	title	tags mask	isfloating	monitor	canfocus*/
+	{ "Firefox",			NULL,		NULL,	1 << 8,		0,		-1,	1 },
+	{ "firefox",			NULL,		NULL,	1 << 8,		0,		-1,	1 },
+	{ "firefox-default",		NULL,		NULL,	1 << 8,		0,		-1,	1 },
+	{ "tabbed",			NULL,		NULL,	1 << 8,		0,		-1,	1 },
+	{ "thunderbird",		NULL,		NULL,	1 << 7,		0,		-1,	1 },
+	{ "thunderbird-default",	NULL,		NULL,	1 << 7,		0,		-1,	1 },
+	{ "Signal",			NULL,		NULL,	1 << 6,		0,		-1,	1 },
+	{ NULL,				"gurk",		NULL,	1 << 6,		0,		-1,	1 },
+	{ "discord",			NULL,		NULL,	1 << 5,		0,		-1,	1 },
+	{ NULL,				"ruskbd",	NULL,	0x3ff,		1,		-1,	0 },
+	{ NULL,				"qemu",		NULL,	0,		1,		-1,	1 },
 };
 
 /* layout(s) */
