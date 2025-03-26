@@ -21,4 +21,4 @@ if [ -e "$HOME/.xsession.local" ]; then
 	. "$HOME/.xsession.local"
 fi
 
-exec dwm
+exec dwm -l "$HOME/.local/share/dwm.log"

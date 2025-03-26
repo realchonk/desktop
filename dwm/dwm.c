@@ -2236,17 +2236,45 @@ zoom(UNUSED const Arg *arg)
 	pop(c);
 }
 
+void
+redirlog (const char *path)
+{
+	freopen (path, "w", stdout);
+	setvbuf (stdout, NULL, _IOLBF, 512);
+}
+
+int
+usage (void)
+{
+	die ("usage: dwm [-v] [-l logfile]");
+	return 1;
+}
+
 int
 main(int argc, char *argv[])
 {
-	if (argc == 2 && !strcmp("-v", argv[1]))
-		die("dwm-"VERSION);
-	else if (argc != 1)
-		die("usage: dwm [-v]");
+	int option;
+	const char *logfile = NULL;
+
+	while ((option = getopt (argc, argv, "vl:")) != -1) {
+		switch (option) {
+		case 'v':
+			die ("dwm-" VERSION);
+			return 1;
+		case 'l':
+			logfile = optarg;
+			break;
+		default:
+			return usage ();
+		}
+	}
+
 	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
 		fputs("warning: no locale support\n", stderr);
 	if (!(dpy = XOpenDisplay(NULL)))
 		die("dwm: cannot open display");
+	if (logfile != NULL)
+		redirlog(logfile);
 	checkotherwm();
 	setup();
 #ifdef __OpenBSD__
@@ -2255,7 +2283,8 @@ main(int argc, char *argv[])
 #endif /* __OpenBSD__ */
 	scan();
 	run();
-	if(restart) execvp(argv[0], argv);
+	if(restart)
+		execvp(argv[0], argv);
 	cleanup();
 	XCloseDisplay(dpy);
 	return EXIT_SUCCESS;
