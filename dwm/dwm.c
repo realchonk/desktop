@@ -850,11 +850,14 @@ void
 focus(Client *c)
 {
 	if (c == NULL || !ISVISIBLE(c)) {
-		for (c = selmon->stack; c != NULL && !ISVISIBLE(c) && !c->canfocus; c = c->snext);
+		for (c = selmon->stack; c != NULL; c = c->snext) {
+			if (ISVISIBLE (c) && c->canfocus)
+				break;
+		}
 	}
 
 	if (c != NULL) {
-		printf ("focus(%s, canfocus=%d);\n", c->name, c->canfocus);
+		printf ("focus(name='%s', canfocus=%d);\n", c->name, c->canfocus);
 	} else {
 		puts ("focus(NULL);");
 	}
