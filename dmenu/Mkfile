@@ -2,7 +2,7 @@ NAME = dmenu
 MAN = 1
 
 CFLAGS += -Wno-sign-compare
-CPPFLAGS += -DXINERAMA -DFONT=\"${FONT}:size=${FONT_SIZE_TOPBAR}\"
+CPPFLAGS += -DXINERAMA -DFONT='"${FONT}:size=${FONT_SIZE_TOPBAR}"'
 
 all-extra: stest
 

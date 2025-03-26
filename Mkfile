@@ -1,3 +1,5 @@
+include config.mk
+
 .SUBDIRS: bedstatus dmenu dwm misc netris scripts slock st xbgcd
 
 OS != uname
@@ -9,7 +11,7 @@ USERCONFDIR ?= ${HOME}
 ## System configuration files directory
 CONFDIR ?= /etc
 
-## Defualt terminal
+## Default terminal
 TERM ?= st
 
 VERSION = "benni-0.8"
@@ -26,7 +28,7 @@ CPPFLAGS ?= -DVERSION=\"benni-0.1\" -DPREFIX=\"${PREFIX}\" -DTERM=\"${TERM}\" -D
 ## Linker Flags
 LDFLAGS ?=
 
-.EXPORTS: CC CFLAGS CPPFLAGS OS TERM
+.EXPORTS: CC CFLAGS CPPFLAGS OS TERM FONT FONT_SIZE_TERM FONT_SIZE_TOPBAR
 
 ## Check system configuration files
 check:
