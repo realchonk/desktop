@@ -744,6 +744,17 @@ dirtomon(int dir)
 	return m;
 }
 
+unsigned
+popcnt (unsigned x)
+{
+	unsigned c = 0;
+	for (; x != 0; x >>= 1) {
+		if (x & 1)
+			++c;
+	}
+	return c;
+}
+
 void
 drawbar(Monitor *m)
 {
@@ -781,6 +792,8 @@ drawbar(Monitor *m)
 	}
 
 	for (c = m->clients; c; c = c->next) {
+		if (popcnt (c->tags) > 3)
+			continue;
 		occ |= c->tags;
 		if (c->isurgent)
 			urg |= c->tags;
