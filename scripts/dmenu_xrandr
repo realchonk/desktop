@@ -1,14 +1,13 @@
 #!/bin/sh
 
-out=HDMI2
-
-option=$(printf 'on\noff\n' | dmenu -l 2 -p "Configure $out") || exit 0
+option=$(printf 'Reset keybindings\nRU\n' | dmenu -l 2 -p "X Config") || exit 0
 
 case "$option" in
-on)
-	xrandr --output "$out" --auto --pos 1920x0
+'Reset keybindings')
+	@SCRIPTS@/restore-keybinds
 	;;
-off)
-	xrandr --output "$out" --off
+RU)
+	setxkbmap ru
 	;;
 esac
+
