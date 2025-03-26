@@ -9,6 +9,9 @@ PREFIX ?= /usr/local
 ## Installation directory for binaries
 BINPREFIX ?= ${PREFIX}/bin
 
+## Desktop data directory
+DATADIR ?= ${PREFIX}/share/desktop
+
 ## Build ${PROGS:J, }
 all: ${PROGS}
 
@@ -16,10 +19,11 @@ all: ${PROGS}
 clean:
 	rm -f ${PROGS:F}
 
-## Install ${PROGS:J, } into ${DESTDIR}${PREFIX}
+## Install ${PROGS:J, } and kbd-rus.png into ${DESTDIR}${PREFIX}
 install: ${PROGS}
-	mkdir -p ${DESTDIR}${BINPREFIX}
+	mkdir -p ${DESTDIR}${BINPREFIX} ${DESTDIR}${DATADIR}
 	cp -f ${PROGS:F} ${DESTDIR}${BINPREFIX}/
+	cp -f kbd-ru.png ${DESTDIR}${DATADIR}/
 
 bidle: bidle.c
 	${CC} -o $@ bidle.c ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs x11 xscrnsaver` ${LDFLAGS}

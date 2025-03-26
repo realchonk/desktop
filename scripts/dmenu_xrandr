@@ -1,6 +1,6 @@
 #!/bin/sh
 
-option=$(printf 'Reset keybindings\nRU\n' | dmenu -l 2 -p "X Config") || exit 0
+option=$(printf 'Reset keybindings\nRU\nRU-Keymap\n' | dmenu -l 3 -p "X Config") || exit 0
 
 case "$option" in
 'Reset keybindings')
@@ -8,6 +8,9 @@ case "$option" in
 	;;
 RU)
 	setxkbmap ru
+	;;
+RU-Keymap)
+	nsxiv -N ruskbd -g 800x300+0+0 @DATADIR@/kbd-ru.png &
 	;;
 esac
 

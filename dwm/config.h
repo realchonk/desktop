@@ -42,6 +42,7 @@ static const Rule rules[] = {
 	{ "thunderbird-default",	NULL,		NULL,	1 << 7,		0,		-1 },
 	{ "Signal",			NULL,		NULL,	1 << 6,		0,		-1 },
 	{ "discord",			NULL,		NULL,	1 << 5,		0,		-1 },
+	{ NULL,				"ruskbd",	NULL,	0x3ff,		1,		-1 },
 	//{ "Nextcloud",			NULL,		NULL,	1 << 5,		1,		-1 },
 	{ NULL,				"qemu",		NULL,	0,		1,		-1 },
 };

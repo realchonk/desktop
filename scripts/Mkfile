@@ -4,7 +4,10 @@ SCRIPTS != find . -perm -0755 -and -type f -maxdepth 1 | tr '\n' ' '
 PREFIX ?= /usr/local
 
 ## Desktop scripts directory
-SCRIPTSDIR = ${PREFIX}/libexec/desktop
+SCRIPTSDIR ?= ${PREFIX}/libexec/desktop
+
+## Desktop data directory
+DATADIR ?= ${PREFIX}/share/desktop
 
 all:
 
@@ -14,7 +17,7 @@ clean:
 install: ${FILES}
 	mkdir -p ${DESTDIR}${SCRIPTSDIR}
 	@for f in ${SCRIPTS}; do								\
-		sed 's#@PREFIX@#${PREFIX}#g; s#@SCRIPTS@#${SCRIPTSDIR}#; s#@TERM@#${TERM}#'	\
+		sed 's#@PREFIX@#${PREFIX}#g; s#@SCRIPTS@#${SCRIPTSDIR}#; s#@TERM@#${TERM}#; s#@DATADIR@#${DATADIR}#'	\
 		< "$$f" > ${DESTDIR}${SCRIPTSDIR}/$$(basename "$$f");				\
 		chmod +x ${DESTDIR}${SCRIPTSDIR}/$$(basename "$$f");				\
 	done
