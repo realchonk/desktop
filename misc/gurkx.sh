@@ -1,2 +1,4 @@
 #!/bin/sh
-exec st -n gurk -e gurk
+cmd=$(command -v gurk)
+# gurk needs an absolute path for $0
+exec st -n gurk -e "$cmd"
