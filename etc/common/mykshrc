@@ -91,6 +91,7 @@ set -A complete_pass -- $(cd $HOME/.password-store && find . -type f -name '*.gp
 alias pman='man -M /usr/local/share/doc/posix/man'
 alias papropos='apropos -M /usr/local/share/doc/posix/man'
 alias pwhatis='whatis -M /usr/local/share/doc/posix/man'
+alias tman='man -M /usr/local/lib/tcl/tcl8.6/man'
 
 gd() {
 	got di "$@" | bat -l patch
