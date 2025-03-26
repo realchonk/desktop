@@ -98,6 +98,7 @@ static const Key keys[] = {
 	{ MODKEY,			XK_n,		spawn,		{.v = dmscript("dmenu_audio") }},
 	{ MODKEY|ShiftMask,		XK_w,		spawn,		{.v = dmscript("dmenu_word") }},
 	{ MODKEY,			XK_x,		spawn,		{.v = dmscript("dmenu_xrandr") }},
+	{ MODKEY,			0x6de,		spawn,		{.v = dmscript("dmenu_xrandr") }},
 	{ MODKEY|ControlMask,		XK_h,		spawn,		{.v = runst("htop") }},
 	{ MODKEY,			XK_c,		spawn,		{.v = runst("env", "LC_ALL=C", "qalc") }},
 	{ MODKEY,			XK_Escape,	spawn,		{.v = script("lock") } },
