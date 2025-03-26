@@ -2,7 +2,7 @@ NAME = st
 MAN = 1
 
 ## st font
-ST_FONT = -DFONT='"${FONT}:pixelsize=${FONT_SIZE_TERM}:antialias=true:autohint=true"'
+ST_FONT = -DFONT='"${FONT}:size=${FONT_SIZE_TERM}:antialias=true:autohint=true"'
 
 CFLAGS += -Wno-sign-compare
 CPPFLAGS += ${ST_FONT}
@@ -10,6 +10,6 @@ CPPFLAGS += ${ST_FONT}
 FILES != echo *.[ch]
 
 st: ${FILES} ../master.h
-	${CC} -o $@ ${FILES:M*.c} ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs fontconfig freetype2 x11 xft xrender` -lm -lutil ${LDFLAGS}
+	${CC} -o $@ ${FILES:M*.c} ${CFLAGS} `pkg-config --cflags --libs fontconfig freetype2 x11 xft xrender` -lm -lutil ${LDFLAGS}
 
 .expand prog

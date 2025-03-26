@@ -8,7 +8,7 @@ TERM = st
 
 FONT ?= Liberation Mono
 FONT_SIZE_TOPBAR ?= 6
-FONT_SIZE_TERM ?= 12
+FONT_SIZE_TERM ?= 8
 
 VERSION = "benni-0.1"
 
