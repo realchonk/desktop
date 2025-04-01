@@ -222,6 +222,7 @@ static void tagfocusmon(const Arg *arg);
 static void tile(Monitor *m);
 static void togglebar(const Arg *arg);
 static void togglefloating(const Arg *arg);
+static void togglefocus(const Arg *arg);
 static void toggletag(const Arg *arg);
 static void toggleview(const Arg *arg);
 static void unfocus(Client *c, int setfocus);
@@ -1807,6 +1808,15 @@ togglebar(UNUSED const Arg *arg)
 	updatebarpos(selmon);
 	XMoveResizeWindow(dpy, selmon->barwin, selmon->wx, selmon->by, selmon->ww, bh);
 	arrange(selmon);
+}
+
+void
+togglefocus (UNUSED const Arg *arg)
+{
+	if (!selmon->sel || selmon->sel->isfullscreen)
+		return;
+
+	selmon->sel->canfocus = !selmon->sel->canfocus;
 }
 
 void
