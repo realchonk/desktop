@@ -1,5 +1,5 @@
 #!/bin/ksh
-case "$(command -v vim)" in
+case "$(command -v nvim || command -v vim)" in
 */nvim)		VIM=nvim ;;
 */vim)		VIM=vim	;;
 *)		VIM=vi	;;
