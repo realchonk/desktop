@@ -7,8 +7,8 @@ xset b off
 sndioctl output.mute=1
 sndioctl output.level=0.5
 
-if ! pgrep -u "$(id -u)" ssh-agent >/dev/null; then
-	eval $(ssh-agent)
+if [ -z "${SSH_AGENT_PID}" ]; then
+	eval "$(ssh-agent)"
 fi
 
 bedstatus &
