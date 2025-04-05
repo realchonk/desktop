@@ -15,5 +15,4 @@
 - replace make with bmk, and import bmk
 
 # Features
-- notifications
-  - dmenu_pass for *_copy
+- configure dunst

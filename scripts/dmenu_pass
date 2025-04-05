@@ -1,10 +1,10 @@
-#/bin/sh
+#!/bin/sh
 
 dir="$HOME/.password-store"
 cache="$dir/.cache"
 
 usage() {
-	echo "Usage: $0 test|paste|copy|login_enter|login_tab|paste_username|copy_username|paste_otp|copy_otp"
+	echo "Usage: $0 test|paste|copy|login_enter|login_tab|paste_username|copy_username|test_otp|paste_otp|copy_otp"
 	exit 1
 }
 
@@ -20,8 +20,26 @@ paste_tab() {
 	xdotool key Tab
 }
 
+notify() {
+	notify-send			\
+		-a 'Password Manager'	\
+		-t 2000			\
+		'Password Manager'	\
+		"$@"
+}
+
+# $1 - errmsg
+die() {
+	printf 'Error: %s\n' "$1" >&2
+	notify -u critical "Error: $1"
+	exit 1
+}
+
+# $1 - comment
+# $2 - value
 copy() {
-	echo "$1" | xclip -in -sel clipboard
+	echo "$2" | xclip -in -sel clipboard
+	notify "$1 for '$name' copied."
 }
 
 list() {
@@ -31,7 +49,7 @@ list() {
 		cd "$dir"
 		find . -type f -name '*.gpg' | sed 's/^\.\/\(.*\)\.gpg/\1/' | sort | tee "$cache"
 	else
-		echo 'Password Store is empty'
+		die 'Password Store is empty'
 	fi
 }
 
@@ -39,49 +57,74 @@ mode=$1	# test, paste, copy, login_enter, login_tab
 
 [ -z "$mode" ] && usage
 
-name=$(list | dmenu -l 10 -p Password) || exit 1
-creds=$(pass show "$name") || exit 1
-username=$(echo "$creds" | sed -n '/^username: /s///p')
-password=$(echo "$creds" | sed -n '/^password: /s///p')
+selectpw() {
+	name=$(list | dmenu -l 10 -p "$1") || exit 1
+}
+
+getuserpass() {
+	selectpw "$1"
+	creds=$(pass show "$name") || die "Failed to get credentials for '$name'."
+	username=$(echo "$creds" | sed -n '/^username: /s///p')
+	password=$(echo "$creds" | sed -n '/^password: /s///p')
+	{ [ -z "$username" ] || [ -z "$password" ]; } && die "Empty/Invalid credentials for '$name'."
+}
+
+
+getotp() {
+	selectpw "$1"
+	otp=$(pass otp "$name") || die "Failed to get OTP for '$name'."
+}
 
 case "$mode" in
 test)
+	getuserpass "Test:"
 	echo "Username: $username"
 	echo "Password: $password"
 	;;
 paste)
+	getuserpass "Password:"
 	paste "$password"
 	paste_enter
 	;;
 copy)
-	copy "$password"
+	getuserpass "Password:"
+	copy "Password" "$password"
 	;;
 paste_username)
+	getuserpass "Username:"
 	paste "$username"
 	paste_enter
 	;;
 copy_username)
-	copy "$username"
+	getuserpass "Username:"
+	copy "Username" "$username"
 	;;
 login_tab)
+	getuserpass "Account:"
 	paste "$username"
 	paste_tab
 	paste "$password"
 	paste_tab
 	;;
 login_enter)
+	getuserpass "Account:"
 	paste "$username"
 	paste_enter
 	paste "$password"
 	paste_enter
 	;;
+test_otp)
+	getotp "Test (OTP):"
+	echo "OTP: $otp"
+	;;
 paste_otp)
-	otp=$(pass otp "$name") || exit 1
+	getotp "OTP:"
 	paste "$otp"
 	paste_enter
 	;;
 copy_otp)
-	pass otp -c "$name"
+	getotp "OTP:"
+	copy "OTP" "$otp"
 	;;
 *)
 	usage
