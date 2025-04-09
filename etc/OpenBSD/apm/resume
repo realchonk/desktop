@@ -1,6 +1,7 @@
 #!/bin/sh
 rcctl reload sndiod
-rcctl start obsdfreqd 2>&1 >/dev/null
+rcctl restart wpa_supplicant
+rcctl start obsdfreqd
 sndioctl output.mute=1
 sndioctl output.level=0.5
 wsconsctl mouse2.reverse_scrolling=1
