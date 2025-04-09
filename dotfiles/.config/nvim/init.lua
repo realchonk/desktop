@@ -17,6 +17,7 @@ end
 require "paq" {
 	"savq/paq-nvim",
 	"neovim/nvim-lspconfig",
+	"ethanholz/nvim-lastplace",
 	{ "nvim-treesitter/nvim-treesitter", build = ":TSUpdate" },
 }
 
@@ -37,6 +38,12 @@ lspconfig.svls.setup {
 	end
 }
 --lspconfig.svlangserver.setup{}
+
+require'nvim-lastplace'.setup{
+	lastplace_ignore_buftype = {"quickfix", "nofile", "help"},
+	lastplace_ignore_filetype = {"gitcommit", "girebase"},
+	lastplace_open_folds = true,
+}
 
 vim.opt.clipboard = 'unnamedplus'
 vim.opt.number = true

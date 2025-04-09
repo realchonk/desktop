@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#choice=$(cat /usr/share/dict/{american,propernames,words} | tr '[[:upper:]]' '[[:lower:]]' | sort | uniq | dmenu -l 10)
-choice=$(dmenu -l 32 < "$HOME/.local/share/dict")
+choice=$(cat /usr/share/dict/{american,propernames,words} | tr '[[:upper:]]' '[[:lower:]]' | sort | uniq | dmenu -l 10)
+#choice=$(dmenu -l 32 < "$HOME/.local/share/dict")
 [ "$choice" ] && xdotool type --delay 0 "$choice"
 
