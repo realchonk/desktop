@@ -181,6 +181,10 @@ gse() {
 	got se -b "$(got br)" "$@"
 }
 
+gbl() {
+	got bl "$@" | bat -l c
+}
+
 rplay() {
 	AUDIODEVICE='snd@192.168.64.7/0' mpv $RPLAYFLAGS "$@"
 }
