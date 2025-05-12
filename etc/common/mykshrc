@@ -5,7 +5,7 @@ case "$(command -v nvim || command -v vim)" in
 *)		VIM=vi	;;
 esac
 
-if command -v colorls; then
+if command -v colorls >/dev/null; then
 	LS=colorls
 elif [ "$(uname)" = 'Linux' ]; then
 	LS='ls --color=always'
