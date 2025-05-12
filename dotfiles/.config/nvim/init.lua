@@ -37,6 +37,7 @@ lspconfig.svls.setup {
 		return vim.fs.dirname(vim.fs.find('Makefile', { path = fname, upward = true })[1])
 	end
 }
+lspconfig.pylsp.setup{}
 --lspconfig.svlangserver.setup{}
 
 require'nvim-lastplace'.setup{
