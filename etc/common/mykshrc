@@ -84,8 +84,11 @@ COMMANDS=$(command ls -1 -- $(echo "$PATH" | tr ':' '\n') | sort | uniq)
 set -A complete_doas_1 -- ${COMMANDS}
 set -A complete_which -- ${COMMANDS}
 set -A complete_exec -- ${COMMANDS}
-set -A complete_pass_1 -- show generate ls edit git rm cp mv
-set -A complete_pass -- $(cd $HOME/.password-store && find . -type f -name '*.gpg' | sed 's/^\.\///; s/\.gpg$//')
+
+if [ -e "$HOME/.password-store" ]; then
+	set -A complete_pass_1 -- show generate ls edit git rm cp mv
+	set -A complete_pass -- $(cd $HOME/.password-store && find . -type f -name '*.gpg' | sed 's/^\.\///; s/\.gpg$//')
+fi
 
 
 alias pman='man -M /usr/local/share/doc/posix/man'
