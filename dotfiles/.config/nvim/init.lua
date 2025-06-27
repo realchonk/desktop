@@ -19,6 +19,9 @@ require "paq" {
 	"neovim/nvim-lspconfig",
 	"ethanholz/nvim-lastplace",
 	{ "nvim-treesitter/nvim-treesitter", build = ":TSUpdate" },
+	"mrcjkb/rustaceanvim",
+	"navarasu/onedark.nvim",
+	"nvim-tree/nvim-tree.lua",
 }
 
 vim.cmd("PaqInstall")
@@ -28,10 +31,10 @@ lspconfig.awk_ls.setup{}
 lspconfig.bashls.setup{}
 lspconfig.clangd.setup{}
 lspconfig.dotls.setup{}
-lspconfig.rust_analyzer.setup{
-	on_attach = on_attach,
-	capabilities = capabilities,
-}
+-- lspconfig.rust_analyzer.setup{
+-- 	on_attach = on_attach,
+-- 	capabilities = capabilities,
+-- }
 lspconfig.svls.setup {
 	root_dir = function(fname) 
 		return vim.fs.dirname(vim.fs.find('Makefile', { path = fname, upward = true })[1])
@@ -46,12 +49,14 @@ require'nvim-lastplace'.setup{
 	lastplace_open_folds = true,
 }
 
+vim.g.mapleader = " "
 vim.opt.clipboard = 'unnamedplus'
 vim.opt.number = true
 vim.opt.relativenumber = true
 vim.opt.smartindent = true
 vim.opt.ruler = true
-vim.cmd("colorscheme vim")
+-- vim.cmd("colorscheme vim")
+vim.cmd("colorscheme onedark")
 
 -- Close the completion preview window
 vim.cmd("autocmd! CompleteDone * if pumvisible() == 0 | pclose | endif")
@@ -67,3 +72,15 @@ require "nvim-treesitter.configs".setup {
 		additional_vim_regex_highlighting = false,
 	},
 }
+
+require("nvim-tree").setup {
+	actions = {
+		open_file = {
+			quit_on_open = true,
+		}
+	}
+}
+
+vim.keymap.set("n", "<leader>f", function()
+	vim.cmd(":NvimTreeToggle")
+end, { silent = true })
