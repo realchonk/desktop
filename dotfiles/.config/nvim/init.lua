@@ -65,7 +65,7 @@ require "nvim-treesitter.configs".setup {
 	ensure_installed = { "c", "lua", "markdown", "markdown_inline", "vim", "vimdoc", "rust", "make", "nasm" },
 	sync_install = true,
 	auto_install = true,
-	ignore_install = {},
+	ignore_install = { "tcl" },
 
 	highlight = {
 		enable = true,
