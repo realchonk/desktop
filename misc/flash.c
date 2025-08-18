@@ -56,7 +56,7 @@ static void write_all (int fd, const char *buffer, size_t num)
 
 static void print_size (ullong i)
 {
-	const static struct unit {
+	static const struct unit {
 		const char *s;
 		ullong u;
 	} units[] = {
@@ -110,7 +110,8 @@ static void copy (int srcfd, int devfd, char *buffer, size_t size, ullong num)
 		update_progress (i, num);
 		n = read_all (srcfd, buffer, size);
 		write_all (devfd, buffer, n);
-		fdatasync (devfd);
+		if (fdatasync (devfd) != 0)
+			err (1, "fdatasync()");
 	}
 	update_progress (i, num);
 	fputc ('\n', stderr);
@@ -157,6 +158,8 @@ int main (int argc, char *argv[])
 		err (1, "fstat('%s')", argv[1]);
 
 	copy (srcfd, devfd, buffer, size, (ullong)st.st_size);
+	if (fsync (devfd) != 0)
+		err (1, "fsync()");
 
 	close (devfd);
 	close (srcfd);
