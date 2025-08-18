@@ -110,6 +110,7 @@ static void copy (int srcfd, int devfd, char *buffer, size_t size, ullong num)
 		update_progress (i, num);
 		n = read_all (srcfd, buffer, size);
 		write_all (devfd, buffer, n);
+		fdatasync (devfd);
 	}
 	update_progress (i, num);
 	fputc ('\n', stderr);
