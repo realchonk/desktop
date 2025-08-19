@@ -3,6 +3,10 @@ MAN = 1
 
 CFLAGS += -std=c2x
 
+.if "${OS}" == "Linux"
+LDFLAGS += -lcrypt
+.endif
+
 install-extra: install-bin
 	chmod u+s ${DESTDIR}${BINPREFIX}/slock
 
