@@ -26,15 +26,10 @@ fi
 
 if command -v dbus-launch >/dev/null 2>&1; then
 	_dbus_env_file="/tmp/dbus-$(id -u)-env"
-	if [ -e "${_dbus_env_file}" ]; then
-		export DBUS_SESSION_BUS_ADDRESS="$(cat "${_dbus_env_file}")"
-	else
-		export $(dbus-launch)
-		echo "${DBUS_SESSION_BUS_ADDRESS}" > "${_dbus_env_file}"
+	if [ ! -e "${_dbus_env_file}" ]; then
+		dbus-launch > "${_dbus_env_file}"
 	fi
+	. "${_dbus_env_file}"
 fi
-if [ ! -e "/tmp/dbus-$(id -u)-env" ] && command -v dbus-launch >/dev/null 2>&1; then
-
-else
 
 exec dwm -l "$HOME/.local/share/dwm.log"
