@@ -20,16 +20,16 @@ dunst &
 
 pkill xconsole
 
-if [ -e "$HOME/.xsession.local" ]; then
-	. "$HOME/.xsession.local"
-fi
-
 if command -v dbus-launch >/dev/null 2>&1; then
 	_dbus_env_file="/tmp/dbus-$(id -u)-env"
 	if [ ! -e "${_dbus_env_file}" ]; then
 		dbus-launch > "${_dbus_env_file}"
 	fi
 	. "${_dbus_env_file}"
+fi
+
+if [ -e "$HOME/.xsession.local" ]; then
+	. "$HOME/.xsession.local"
 fi
 
 exec dwm -l "$HOME/.local/share/dwm.log"
