@@ -32,11 +32,11 @@ LDFLAGS ?=
 
 ## Check system configuration files
 check:
-	find etc/common etc/$$(uname) -not -type d | awk '{a=$$0; sub(/etc\/[^\/]+/, "/etc", a); system("diff -u " $$0 " " a)}'
+	find etc/common etc/$$(uname) -not -type d | awk '{a=$$0; sub(/etc\/[^\/]+/, "/etc", a); system("diff -u " a " " $$0)}'
 
 ## Check user configuration files
 check-user:
-	find dotfiles/ -not -type d -exec sh -c 'diff -u {} "$$HOME/$$(echo "{}" | sed 's@^dotfiles/@@')"' \;
+	find dotfiles/ -not -type d -exec sh -c 'diff -u "$$HOME/$$(echo "{}" | sed 's@^dotfiles/@@')" {}' \;
 
 ## Install system configuration files into ${DESTDIR}${CONFDIR}
 install-etc:
