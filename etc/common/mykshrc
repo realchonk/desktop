@@ -68,7 +68,9 @@ if [ "$(uname)" = "OpenBSD" ]; then
 	set -A complete_vmctl_1 -- console create pause reload start status stop unpause wait
 	set -A complete_vmctl -- $(vmctl status | awk '!/NAME/{print $NF}')
 
-	export LIBCLANG_PATH="/usr/local/llvm16/lib"
+	__clang_ver=$(clang --version 2>/dev/null | awk '/version/{print $NF}' | cut -d. -f1)
+	export LIBCLANG_PATH="/usr/local/llvm${__clang_ver}/lib"
+	unset __clang_ver
 fi
 
 if [ "$(uname)" = "OpenBSD" ] || [ "$(uname)" = "FreeBSD" ]; then
