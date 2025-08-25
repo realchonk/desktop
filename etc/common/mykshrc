@@ -191,18 +191,22 @@ gbl() {
 	got bl "$@" | bat -l c
 }
 
-_gbrcl_select() {
-	while read -r branch; do
-		printf "Delete branch %s [yN]? " "$branch" >&2
-		read -r choice <&3
-		[ "$choice" = 'y' ] && printf '%s\n' "$branch"
-	done
-}
-
 _gbrcl_delete() {
 	while read -r branch; do
-		got br -d "origin/$branch"
-		got br -d "$branch"
+		printf "Delete branch %s [qyN]? " "$branch" >&2
+		read -r choice <&3
+		case "$choice" in
+		y|Y)
+			got br -d "origin/$branch"
+			got br -d "$branch"
+			;;
+		q)
+			break
+			;;
+		*)
+			continue
+			;;
+		esac
 	done
 }
 
@@ -211,7 +215,6 @@ gbrcl() {
 	got br -l								\
 		| sed 's/^[[:space:]]*\([^:]*\).*$/\1/'				\
 		| grep -v -e '^origin/'	-e '^\*' -e '^main' -e '^master'	\
-		| _gbrcl_select							\
 		| _gbrcl_delete
 	exec 3>&-
 }
