@@ -15,6 +15,8 @@
  */
 #include <sys/stat.h>
 #include <unistd.h>
+#include <string.h>
+#include <libgen.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -24,7 +26,7 @@ typedef unsigned long long ullong;
 
 static int usage (void)
 {
-	fputs ("usage: flash [-b blocksize] <file> <device>\n", stderr);
+	fputs ("usage: flash [-c] [-b blocksize] <file> <device>\n", stderr);
 	return 1;
 }
 
@@ -121,15 +123,18 @@ int main (int argc, char *argv[])
 {
 	struct stat st;
 	size_t size = 1 << 20;
-	char *buffer, *endp;
-	int option, srcfd, devfd;
+	char *buffer, *endp, *bn;
+	int option, srcfd, devfd, dirfd, create = 0;
 
-	while ((option = getopt (argc, argv, "b:")) != -1) {
+	while ((option = getopt (argc, argv, "b:c")) != -1) {
 		switch (option) {
 		case 'b':
 			size = strtoul (optarg, &endp, 10);
 			if (optarg[0] == '\0' || *endp != '\0')
 				return usage ();
+			break;
+		case 'c':
+			create = 1;
 			break;
 		default:
 			return usage ();
@@ -146,16 +151,35 @@ int main (int argc, char *argv[])
 	if (srcfd < 0)
 		err (1, "open('%s')", argv[0]);
 
-	devfd = open (argv[1], O_WRONLY);
+	if (create) {
+		if (stat (argv[1], &st) == 0 && S_ISDIR (st.st_mode)) {
+			dirfd = open (argv[1], O_RDONLY | O_DIRECTORY);
+			if (dirfd < 0)
+				err (1, "open('%s')", argv[1]);
+
+			bn = strdup (argv[0]);
+			devfd = openat (dirfd, basename (bn), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+			free (bn);
+			close (dirfd);
+		} else {
+			devfd = open (argv[1], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+		}
+	} else {
+		devfd = open (argv[1], O_WRONLY);
+	}
 	if (devfd < 0)
 		err (1, "open('%s')", argv[1]);
+
 
 	buffer = malloc (size);
 	if (buffer == NULL)
 		err (1, "malloc()");
 
 	if (fstat (srcfd, &st) != 0)
-		err (1, "fstat('%s')", argv[1]);
+		err (1, "fstat('%s')", argv[0]);
+
+	if (st.st_size == 0)
+		errx (1, "file size is zero");
 
 	copy (srcfd, devfd, buffer, size, (ullong)st.st_size);
 	if (fsync (devfd) != 0)
