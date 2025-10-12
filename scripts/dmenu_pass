@@ -8,8 +8,15 @@ usage() {
 	exit 1
 }
 
+set_clipboard() {
+	echo "$1" | xclip -in -sel primary
+	echo "$1" | xclip -in -sel clipboard
+}
+
 paste() {
-	xdotool type "$1"
+	set_clipboard "$1"
+	xdotool key --clearmodifiers 'shift+Insert'
+	set_clipboard ""
 }
 
 paste_enter() {
