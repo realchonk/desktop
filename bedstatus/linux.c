@@ -204,7 +204,7 @@ static void bat (struct status *st)
 
 	for (int i = 0; i < nbat; ++i) {
 		const struct bat *bat = &bats[i];
-		long long n, f, v, c;
+		long long c, cf, v, cn, p, en, ef;
 		char *s;
 
 		s = bat_read (bat, "status");
@@ -218,16 +218,26 @@ static void bat (struct status *st)
 			continue;
 
 		c = bat_parse (bat, "current_now");
-		n = bat_parse (bat, "charge_now");
-		f = bat_parse (bat, "charge_full");
+		p = bat_parse (bat, "power_now");
+		cn = bat_parse (bat, "charge_now");
+		en = bat_parse (bat, "energy_now");
+		cf = bat_parse (bat, "charge_full");
+		ef = bat_parse (bat, "energy_full");
 
-		if (n >= 0 && f > 0) {
+		if (en >= 0 && ef > 0) {
 			st->has_bat_perc = true;
-			full += f / 1000 * v / 1000000;
-			now += n / 1000 * v / 1000000;
+			full += ef / 1000;
+			now += en / 1000;
+		} else if (cn >= 0 && cf > 0) {
+			st->has_bat_perc = true;
+			full += cf / 1000 * v / 1000000;
+			now += cn / 1000 * v / 1000000;
 		}
 
-		if (c >= 0) {
+		if (p >= 0) {
+			st->has_power = true;
+			st->power = p / 1000;
+		} else if (c >= 0) {
 			st->has_power = true;
 			st->power += c / 1000 * v / 1000000;
 		}
@@ -273,8 +283,10 @@ void init_backend (void)
 		bat->dirfd = open (path, O_DIRECTORY | O_RDONLY);
 		free (path);
 
-		if (bat->dirfd > 0)
+		if (bat->dirfd > 0) {
+			printf ("found battery BAT%d\n", i);
 			++nbat;
+		}
 	}
 }
 
