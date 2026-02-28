@@ -6,8 +6,16 @@
 
 xset b off
 
-sndioctl output.mute=1
-sndioctl output.level=0.5
+case "$(uname)" in
+OpenBSD)
+	sndioctl output.mute=1
+	sndioctl output.level=0.5
+	;;
+Linux)
+	wpctl set-mute '@DEFAULT_SINK@' 1
+	wpctl set-level '@DEFAULT_SINK@' 0.5
+	;;
+esac
 
 if [ -z "${SSH_AGENT_PID}" ]; then
 	eval "$(ssh-agent)"
