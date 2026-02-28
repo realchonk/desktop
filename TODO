@@ -16,3 +16,6 @@
 
 # Features
 - configure dunst
+
+# Other
+- abstract away audio stuff into a separate script
