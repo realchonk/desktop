@@ -38,6 +38,7 @@ static const Rule rules[] = {
 	{ "firefox",			NULL,		NULL,	1 << 8,		0,		-1,	1 },
 	{ "firefox-default",		NULL,		NULL,	1 << 8,		0,		-1,	1 },
 	{ "tabbed",			NULL,		NULL,	1 << 8,		0,		-1,	1 },
+	{ "org.mozilla.Thunderbird",	NULL,		NULL,	1 << 7,		0,		-1,	1 },
 	{ "thunderbird",		NULL,		NULL,	1 << 7,		0,		-1,	1 },
 	{ "thunderbird-default",	NULL,		NULL,	1 << 7,		0,		-1,	1 },
 	{ "Signal",			NULL,		NULL,	1 << 6,		0,		-1,	1 },
