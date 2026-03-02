@@ -246,7 +246,7 @@ static void bat (struct status *st)
 	if (st->has_bat_perc)
 		st->bat_perc = now * 100 / full;
 
-	if (st->has_bat_perc && st->has_power) {
+	if (st->has_bat_perc && st->has_power && st->power > 0) {
 		st->has_bat_rem = true;
 		st->bat_rem = now / st->power * 60;
 	}
