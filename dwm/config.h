@@ -77,6 +77,7 @@ static const Layout layouts[] = {
 static const char *termcmd[]  = { TERM, NULL };
 static const char *termcmd2[]  = { "vertigo", NULL };
 static const char *xkillcmd[]  = { "xkill", NULL };
+static const char *flameshotcmd[]  = { "flameshot", "gui", NULL };
 
 #define script(...) ((const char *[]){ "/bin/sh", PREFIX "/libexec/desktop/" __VA_ARGS__, NULL })
 #define dmscript(...) script(__VA_ARGS__, DMENU_ARGS)
@@ -108,6 +109,7 @@ static const Key keys[] = {
 	{ MODKEY,			XK_Return,	spawn,		{.v = termcmd } },
 	{ MODKEY|ShiftMask,		XK_Return,	spawn,		{.v = termcmd2 } },
 	{ MODKEY|ControlMask,		XK_q,		spawn,		{.v = xkillcmd } },
+	{ MODKEY,			XK_Insert,	spawn,		{.v = flameshotcmd } },
 	//{ MODKEY|ShiftMask,		XK_Return,	spawn,		{.v = script("launch-tabbed-st") } },
 	{ MODKEY|ShiftMask,		XK_t,		spawn,		{.v = script("toggle_touchpad")} },
 	{ MODKEY,			XK_b,		togglebar,	{0} },
