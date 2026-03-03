@@ -1,55 +1,8 @@
 #!/bin/sh
 
-is_muted() {
-	case "$(uname)" in
-	OpenBSD)
-		sndioctl output.mute | cut -d= -f2
-		;;
-	Linux)
-		if [ "$(wpctl get-volume '@DEFAULT_SINK@' | sed -n '/^Volume: .*\[MUTED\]/p')" ]; then
-			echo 1
-		else
-			echo 0
-		fi
-	esac
-}
-
-set_muted() {
-	case "$(uname)" in
-	OpenBSD)
-		sndioctl "output.mute=$1"
-		;;
-	Linux)
-		wpctl set-mute '@DEFAULT_SINK@' "$1"
-		;;
-	esac
-}
-
-get_level() {
-	case "$(uname)" in
-	OpenBSD)
-		sndioctl output.level | cut -d= -f2
-		;;
-	Linux)
-		wpctl get-volume '@DEFAULT_SINK@' | sed -n '/^Volume: /s/^Volume: \([0-9.]*\).*$/\1/p'
-		;;
-	esac
-}
-
-set_level() {
-	case "$(uname)" in
-	OpenBSD)
-		sndioctl "output.level=$1"
-		;;
-	Linux)
-		wpctl set-volume '@DEFAULT_SINK@' "$1"
-		;;
-	esac
-}
-
 while true; do
-	muted=$(is_muted)
-	level=$(get_level)
+	muted=$(audioctl is-muted)
+	level=$(audioctl get-volume)
 
 	[ "$muted" = 1 ] && m="Unmute" || m="Mute"
 	if [ "$muted" = 1 ]; then
@@ -65,23 +18,22 @@ while true; do
 
 	case "$r" in
 	+)
-		set_level "$(printf 'scale=2; %.2f+0.1\n' "$level" | bc)"
+		audioctl set-volume "$(printf 'scale=2; %.2f+0.1\n' "$level" | bc)"
 		;;
 	-)
-		set_level "$(printf 'scale=2; %.2f-0.1\n' "$level" | bc)"
-		sndioctl "output.level=$level"
+		audioctl set-volume "$(printf 'scale=2; %.2f-0.1\n' "$level" | bc)"
 		;;
 	Mute)
-		set_muted 1
+		audioctl set-muted 1
 		break
 		;;
 	Unmute)
-		set_muted 0
+		audioctl set-muted 0
 		break
 		;;
 	*)
 		if echo "$r" | grep -qE '^(0|1|0\.[0-9]+)$'; then
-			set_level "$r"
+			audioctl set-volume "$r"
 			break
 		fi
 		;;

@@ -49,6 +49,11 @@ install-user:
 	mkdir -p ${DESTDIR}${USERCONFDIR}
 	find dotfiles -mindepth 1 -maxdepth 1 | xargs -I '{}' cp -rf '{}' ${DESTDIR}${USERCONFDIR}/
 
+install-extra:
+	mkdir -p ${DESTDIR}${PREFIX}/bin
+	cp -f audioctl ${DESTDIR}${PREFIX}/bin/
+	chmod 755 ${DESTDIR}${PREFIX}/bin/audioctl
+
 .sh:
 	sed 's#@VERSION@#${VERSION}#; s#@PREFIX@#${PREFIX}#; s#@TERM@#${TERM}#' $< > $@
 	chmod +x $@
