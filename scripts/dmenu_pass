@@ -9,8 +9,8 @@ usage() {
 }
 
 set_clipboard() {
-	echo "$1" | xclip -in -sel primary
-	echo "$1" | xclip -in -sel clipboard
+	printf '%s' "$1" | xclip -in -sel primary
+	printf '%s' "$1" | xclip -in -sel clipboard
 }
 
 paste() {
@@ -45,7 +45,7 @@ die() {
 # $1 - comment
 # $2 - value
 copy() {
-	echo "$2" | xclip -in -sel clipboard
+	printf '%s' "$2" | xclip -in -sel clipboard
 	notify "$1 for '$name' copied."
 }
 
@@ -71,8 +71,8 @@ selectpw() {
 getuserpass() {
 	selectpw "$1"
 	creds=$(pass show "$name") || die "Failed to get credentials for '$name'."
-	username=$(echo "$creds" | sed -n '/^username: /s///p')
-	password=$(echo "$creds" | sed -n '/^password: /s///p')
+	username=$(printf '%s\n' "$creds" | sed -n '/^username: /s///p' | tr -d '\n')
+	password=$(printf '%s\n' "$creds" | sed -n '/^password: /s///p' | tr -d '\n')
 	{ [ -z "$username" ] || [ -z "$password" ]; } && die "Empty/Invalid credentials for '$name'."
 }
 
