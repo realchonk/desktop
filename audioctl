@@ -1,0 +1,80 @@
+#!/bin/sh
+
+is_muted() {
+	case "$(uname)" in
+	OpenBSD)
+		sndioctl output.mute | cut -d= -f2
+		;;
+	Linux)
+		if [ "$(wpctl get-volume '@DEFAULT_SINK@' | sed -n '/^Volume: .*\[MUTED\]/p')" ]; then
+			echo 1
+		else
+			echo 0
+		fi
+	esac
+}
+
+set_muted() {
+	case "$(uname)" in
+	OpenBSD)
+		sndioctl "output.mute=$1"
+		;;
+	Linux)
+		wpctl set-mute '@DEFAULT_SINK@' "$1"
+		;;
+	esac
+}
+
+get_volume() {
+	case "$(uname)" in
+	OpenBSD)
+		sndioctl output.level | cut -d= -f2
+		;;
+	Linux)
+		wpctl get-volume '@DEFAULT_SINK@' | sed -n '/^Volume: /s/^Volume: \([0-9.]*\).*$/\1/p'
+		;;
+	esac
+}
+
+set_volume() {
+	case "$(uname)" in
+	OpenBSD)
+		sndioctl "output.level=$1"
+		;;
+	Linux)
+		wpctl set-volume '@DEFAULT_SINK@' "$1"
+		;;
+	esac
+}
+
+usage() {
+	echo "usage: audioctl -h" >&2
+	exit 1
+}
+
+[ "$#" -gt 0 ] || usage
+
+case "$1" in
+-h|--help)
+	echo TODO
+	exit 1
+	;;
+get-volume)
+	[ "$#" -eq 1 ] || { echo "usage: audioctl get-volume" >&2; exit 1; }
+	get_volume
+	;;
+set-volume)
+	[ "$#" -eq 2 ] || { echo "usage: audioctl set-volume <volume>" >&2; exit 1; }
+	set_volume "$2"
+	;;
+is-muted)
+	[ "$#" -eq 1 ] || { echo "usage: audioctl is-muted" >&2; exit 1; }
+	is_muted
+	;;
+set-muted)
+	[ "$#" -eq 2 ] || { echo "usage: audioctl set-muted <0/1>" >&2; exit 1; }
+	set_muted "$2"
+	;;
+esac
+
+# vim: set ts=4 sw=4 noet:
