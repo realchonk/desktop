@@ -26,22 +26,19 @@ require "paq" {
 
 vim.cmd("PaqInstall")
 
-lspconfig = require 'lspconfig'
-lspconfig.awk_ls.setup{}
-lspconfig.bashls.setup{}
-lspconfig.clangd.setup{}
-lspconfig.dotls.setup{}
--- lspconfig.rust_analyzer.setup{
--- 	on_attach = on_attach,
--- 	capabilities = capabilities,
--- }
-lspconfig.svls.setup {
+-- lspconfig = require 'lspconfig'
+vim.lsp.enable('awk_ls')
+vim.lsp.enable('awk_ls')
+vim.lsp.enable('bashls')
+vim.lsp.enable('clangd')
+vim.lsp.enable('dotls')
+vim.lsp.config['svls'] = {
 	root_dir = function(fname) 
 		return vim.fs.dirname(vim.fs.find('Makefile', { path = fname, upward = true })[1])
 	end
 }
-lspconfig.pylsp.setup{}
---lspconfig.svlangserver.setup{}
+vim.lsp.enable('svls')
+vim.lsp.enable('pylsp')
 
 require'nvim-lastplace'.setup{
 	lastplace_ignore_buftype = {"quickfix", "nofile", "help"},
