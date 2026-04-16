@@ -24,7 +24,7 @@ require "paq" {
 	"nvim-tree/nvim-tree.lua",
 }
 
-vim.cmd("PaqInstall")
+vim.cmd("PaqSync")
 
 -- lspconfig = require 'lspconfig'
 vim.lsp.enable('awk_ls')
@@ -58,7 +58,7 @@ vim.cmd("colorscheme onedark")
 -- Close the completion preview window
 vim.cmd("autocmd! CompleteDone * if pumvisible() == 0 | pclose | endif")
 
-require "nvim-treesitter.configs".setup {
+require "nvim-treesitter.config".setup {
 	ensure_installed = { "c", "lua", "markdown", "markdown_inline", "vim", "vimdoc", "rust", "make", "nasm" },
 	sync_install = true,
 	auto_install = true,
