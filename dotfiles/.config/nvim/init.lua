@@ -1,7 +1,7 @@
 local paqpath = vim.fn.stdpath("data") .. "/site/pack/paqs/start/paq-nvim"
 if not (vim.uv or vim.loop).fs_stat(paqpath) then
 	local paqrepo = "https://github.com/savq/paq-nvim"
-	local out = vim.fn.system({ "git", "clone", "--depth=1", paqrepo, paqpath })
+	local out = vim.fn.system({ "git", "clone", paqrepo, paqpath })
 	if vim.v.shell_error ~= 0 then
 		vim.api.nvim_echo({
 			{ "Failed to clone paq-nvim:\n", "ErrorMsg" },
