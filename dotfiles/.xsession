@@ -28,8 +28,6 @@ xbgcd &
 xidle -delay 900 -timeout 900 -program /usr/local/bin/slock &
 dunst &
 
-export _JAVA_AWT_WM_NONREPARENTING=1
-
 pkill xconsole
 
 if command -v dbus-launch >/dev/null 2>&1; then
