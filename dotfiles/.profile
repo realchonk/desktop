@@ -37,6 +37,7 @@ export QT_QPA_PLATFORMTHEME=qt5ct
 [ "$(uname)" = 'OpenBSD' ] && export LIBCLANG_PATH=/usr/local/llvm16/lib
 
 # Nix
+unset __ETC_PROFILE_NIX_SOURCED
 if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
     . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
 fi
