@@ -2,6 +2,8 @@
 
 . ~/.profile
 
+export _JAVA_AWT_WM_NONREPARENTING=1
+
 /usr/local/libexec/desktop/restore-keybinds
 
 xset b off
