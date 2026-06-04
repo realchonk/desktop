@@ -21,6 +21,7 @@
  * To understand everything else, start reading main().
  */
 #include <errno.h>
+#include <limits.h>
 #include <locale.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -94,6 +95,7 @@ struct Client {
 	int bw, oldbw;
 	unsigned int tags;
 	int isfixed, isfloating, canfocus, isurgent, neverfocus, oldstate, isfullscreen;
+	int seq; /* saved position in the client list, for order restoration */
 	Client *next;
 	Client *snext;
 	Monitor *mon;
@@ -194,12 +196,16 @@ static Client *nexttiled(Client *c);
 static void pop(Client *c);
 static void propertynotify(XEvent *e);
 static void quit(const Arg *arg);
+static void reorderclients(void);
 static Monitor *recttomon(int x, int y, int w, int h);
 static void resize(Client *c, int x, int y, int w, int h, int interact);
 static void resizeclient(Client *c, int x, int y, int w, int h);
 static void resizemouse(const Arg *arg);
 static void restack(Monitor *m);
+static void restoremonitors(void);
+static int restorestate(Client *c);
 static void run(void);
+static void savestate(void);
 static void scan(void);
 static int sendevent(Client *c, Atom proto);
 static void sendmon(Client *c, Monitor *m);
@@ -271,6 +277,8 @@ static void (*handler[LASTEvent]) (XEvent *) = {
 	[UnmapNotify] = unmapnotify
 };
 static Atom wmatom[WMLast], netatom[NetLast];
+static Atom dwmatom;
+static Atom dwmmonatom;
 static int restart = 0;
 static int running = 1;
 static Cur *cursor[CurLast];
@@ -1103,6 +1111,7 @@ manage(Window w, XWindowAttributes *wa)
 
 	c = ecalloc(1, sizeof(Client));
 	c->win = w;
+	c->seq = INT_MAX; /* unrestored windows sort after restored ones */
 	/* geometry */
 	c->x = c->oldx = wa->x;
 	c->y = c->oldy = wa->y;
@@ -1136,6 +1145,7 @@ manage(Window w, XWindowAttributes *wa)
 	updatewmhints(c);
 	c->x = c->mon->mx + (c->mon->mw - WIDTH(c)) / 2;
 	c->y = c->mon->my + (c->mon->mh - HEIGHT(c)) / 2;
+	restorestate(c);
 	XSelectInput(dpy, w, EnterWindowMask|FocusChangeMask|PropertyChangeMask|StructureNotifyMask);
 	grabbuttons(c, 0);
 	if (!c->isfloating)
@@ -1441,6 +1451,35 @@ restack(Monitor *m)
 	while (XCheckMaskEvent(dpy, EnterWindowMask, &ev));
 }
 
+/* Reorder each monitor's client list by the saved sequence number so the
+ * within-tag ordering (master/stack positions) survives a self-restart.
+ * Clients without saved state keep INT_MAX and stay in scan order at the
+ * end. A stable insertion sort preserves ties. */
+void
+reorderclients(void)
+{
+	Monitor *m;
+	Client *c, *next, *sorted, *p;
+
+	for (m = mons; m; m = m->next) {
+		sorted = NULL;
+		for (c = m->clients; c; c = next) {
+			next = c->next;
+			if (!sorted || c->seq < sorted->seq) {
+				c->next = sorted;
+				sorted = c;
+			} else {
+				for (p = sorted; p->next && p->next->seq <= c->seq; p = p->next);
+				c->next = p->next;
+				p->next = c;
+			}
+		}
+		m->clients = sorted;
+	}
+	focus(NULL);
+	arrange(NULL);
+}
+
 void
 run(void)
 {
@@ -1452,6 +1491,136 @@ run(void)
 			handler[ev.type](&ev); /* call handler */
 }
 
+/* Restore the per-monitor selected tags and the focused monitor that
+ * savestate() stored on the root window before a self-restart. */
+void
+restoremonitors(void)
+{
+	int format;
+	unsigned long n, extra, i;
+	Atom type;
+	long *data = NULL;
+	Monitor *m;
+
+	if (XGetWindowProperty(dpy, root, dwmmonatom, 0L, 16L, False, XA_CARDINAL,
+			&type, &format, &n, &extra, (unsigned char **)&data) != Success)
+		return;
+
+	if (data && type == XA_CARDINAL && format == 32 && n >= 1) {
+		/* trailing element holds the previously selected monitor number */
+		for (m = mons, i = 0; m && i + 1 < n; m = m->next, i++) {
+			unsigned int t = data[i] & TAGMASK;
+			if (!t)
+				continue;
+			m->tagset[m->seltags] = t;
+			if (t == (unsigned int)TAGMASK) {
+				m->pertag->curtag = 0;
+			} else {
+				int j;
+				for (j = 0; !(t & 1 << j); j++);
+				m->pertag->curtag = j + 1;
+			}
+			m->nmaster = m->pertag->nmasters[m->pertag->curtag];
+			m->mfact = m->pertag->mfacts[m->pertag->curtag];
+			m->sellt = m->pertag->sellts[m->pertag->curtag];
+			m->lt[m->sellt] = m->pertag->ltidxs[m->pertag->curtag][m->sellt];
+			m->lt[m->sellt^1] = m->pertag->ltidxs[m->pertag->curtag][m->sellt^1];
+		}
+		for (m = mons; m; m = m->next)
+			if (m->num == data[n - 1])
+				selmon = m;
+	}
+	if (data)
+		XFree(data);
+	XDeleteProperty(dpy, root, dwmmonatom);
+}
+
+/* Restore a client's placement (tags, monitor, floating state and
+ * geometry) that was saved by savestate() before a self-restart.
+ * Returns 1 if saved state was found and applied. */
+int
+restorestate(Client *c)
+{
+	int format, restored = 0;
+	unsigned long n, extra;
+	Atom type;
+	long *data = NULL;
+	Monitor *m;
+
+	if (XGetWindowProperty(dpy, c->win, dwmatom, 0L, 8L, False, XA_CARDINAL,
+			&type, &format, &n, &extra, (unsigned char **)&data) != Success)
+		return 0;
+
+	if (data && type == XA_CARDINAL && format == 32 && n == 8 && extra == 0) {
+		if (data[0] & TAGMASK)
+			c->tags = data[0] & TAGMASK;
+		c->seq = data[7];
+		/* leave fullscreen clients alone: their state is restored from
+		 * EWMH properties by updatewindowtype(). */
+		if (!c->isfullscreen) {
+			for (m = mons; m && m->num != data[2]; m = m->next);
+			if (m)
+				c->mon = m;
+			c->isfloating = data[1] ? 1 : 0;
+			if (c->isfloating && data[5] > 0 && data[6] > 0) {
+				c->x = c->oldx = data[3];
+				c->y = c->oldy = data[4];
+				c->w = c->oldw = data[5];
+				c->h = c->oldh = data[6];
+				/* keep the window on its monitor */
+				if (c->x + WIDTH(c) > c->mon->wx + c->mon->ww)
+					c->x = c->mon->wx + c->mon->ww - WIDTH(c);
+				if (c->y + HEIGHT(c) > c->mon->wy + c->mon->wh)
+					c->y = c->mon->wy + c->mon->wh - HEIGHT(c);
+				c->x = MAX(c->x, c->mon->wx);
+				c->y = MAX(c->y, c->mon->wy);
+			}
+		}
+		restored = 1;
+	}
+	if (data)
+		XFree(data);
+	if (restored)
+		XDeleteProperty(dpy, c->win, dwmatom);
+	return restored;
+}
+
+/* Save every client's placement onto its own window as an X property so
+ * it survives a self-restart (the X server keeps the windows alive). */
+void
+savestate(void)
+{
+	Monitor *m;
+	Client *c;
+	long data[8];
+	long mdata[16];
+	int i, seq;
+
+	for (m = mons; m; m = m->next) {
+		for (seq = 0, c = m->clients; c; c = c->next, seq++) {
+			data[0] = c->tags;
+			data[1] = c->isfloating;
+			data[2] = m->num;
+			data[3] = c->x;
+			data[4] = c->y;
+			data[5] = c->w;
+			data[6] = c->h;
+			data[7] = seq;
+			XChangeProperty(dpy, c->win, dwmatom, XA_CARDINAL, 32,
+				PropModeReplace, (unsigned char *)data, 8);
+		}
+	}
+
+	/* per-monitor selected tags, plus the focused monitor as a trailer */
+	for (m = mons, i = 0; m && i < 15; m = m->next, i++)
+		mdata[i] = m->tagset[m->seltags];
+	mdata[i++] = selmon ? selmon->num : 0;
+	XChangeProperty(dpy, root, dwmmonatom, XA_CARDINAL, 32,
+		PropModeReplace, (unsigned char *)mdata, i);
+
+	XSync(dpy, False);
+}
+
 void
 scan(void)
 {
@@ -1459,6 +1628,7 @@ scan(void)
 	Window d1, d2, *wins = NULL;
 	XWindowAttributes wa;
 
+	restoremonitors();
 	if (XQueryTree(dpy, root, &d1, &d2, &wins, &num)) {
 		for (i = 0; i < num; i++) {
 			if (!XGetWindowAttributes(dpy, wins[i], &wa)
@@ -1650,6 +1820,8 @@ setup(void)
 	netatom[NetWMWindowType] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE", False);
 	netatom[NetWMWindowTypeDialog] = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_DIALOG", False);
 	netatom[NetClientList] = XInternAtom(dpy, "_NET_CLIENT_LIST", False);
+	dwmatom = XInternAtom(dpy, "_DWM_CLIENT_STATE", False);
+	dwmmonatom = XInternAtom(dpy, "_DWM_MONITOR_TAGS", False);
 	/* init cursors */
 	cursor[CurNormal] = drw_cur_create(drw, XC_left_ptr);
 	cursor[CurResize] = drw_cur_create(drw, XC_sizing);
@@ -2341,9 +2513,12 @@ main(int argc, char *argv[])
 		die("pledge");
 #endif /* __OpenBSD__ */
 	scan();
+	reorderclients();
 	run();
-	if(restart)
+	if(restart) {
+		savestate();
 		execvp(argv[0], argv);
+	}
 	cleanup();
 	XCloseDisplay(dpy);
 	return EXIT_SUCCESS;
