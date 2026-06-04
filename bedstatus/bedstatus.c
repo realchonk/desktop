@@ -26,6 +26,8 @@
 #define SYM_BAT_HIGH "\uf241 "
 #define SYM_BAT_FULL "\uf240 "
 #define SYM_TMR "\uf253 "
+#define SYM_MIC "\uf130"
+#define SYM_MIC_MUTED "\uf131"
 
 #define COLOR_NORMAL "\x01"
 #define COLOR_WARN "\x03"
@@ -296,6 +298,38 @@ static void format_timer (void)
 	append ("]%s ", reset);
 }
 
+static bool fetch_mic_muted (bool *muted)
+{
+	char out[16], *s;
+	FILE *p;
+
+	p = popen ("audioctl is-mic-muted 2>/dev/null", "r");
+	if (p == NULL)
+		return false;
+
+	s = fgets (out, sizeof (out), p);
+	pclose (p);
+
+	if (s == NULL || (out[0] != '0' && out[0] != '1'))
+		return false;
+
+	*muted = out[0] == '1';
+	return true;
+}
+
+static void format_mic (void)
+{
+	bool muted;
+
+	if (!fetch_mic_muted (&muted))
+		return;
+
+	if (muted)
+		append (SYM_MIC_MUTED " ");
+	else
+		append (COLOR_URGENT SYM_MIC COLOR_NORMAL " ");
+}
+
 static void format_time (void)
 {
 	struct tm *tm;
@@ -311,6 +345,7 @@ static void format_status (const struct status *st)
 	format_cpu (st);
 	format_ram (st);
 	format_bat (st);
+	format_mic ();
 	format_timer ();
 	format_time ();
 }
