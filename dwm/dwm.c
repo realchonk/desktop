@@ -239,6 +239,7 @@ static void updatetitle(Client *c);
 static void updatewindowtype(Client *c);
 static void updatewmhints(Client *c);
 static void view(const Arg *arg);
+static void vstack(Monitor *m);
 static Client *wintoclient(Window w);
 static Monitor *wintomon(Window w);
 static int xerror(Display *dpy, XErrorEvent *ee);
@@ -1798,6 +1799,24 @@ tile(Monitor *m)
 			if (ty + HEIGHT(c) < m->wh)
 				ty += HEIGHT(c) + m->gappx;
 		}
+	}
+}
+
+void
+vstack(Monitor *m)
+{
+	unsigned int i, n, h, ty;
+	Client *c;
+
+	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
+	if (n == 0)
+		return;
+
+	for (i = 0, ty = m->gappx, c = nexttiled(m->clients); c; c = nexttiled(c->next), ++i) {
+		h = (m->wh - ty) / (n - i) - m->gappx;
+		resize(c, m->wx + m->gappx, m->wy + ty, m->ww - (2*c->bw) - 2*m->gappx, h - (2*c->bw), 0);
+		if (ty + HEIGHT(c) < m->wh)
+			ty += HEIGHT(c) + m->gappx;
 	}
 }
 
