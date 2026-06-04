@@ -5,6 +5,8 @@ PROGS =	bidle			\
 	gurkx			\
 	xxed
 
+SCRIPTS = audioctl
+
 ## Installation directory
 PREFIX ?= /usr/local
 
@@ -22,9 +24,9 @@ clean:
 	rm -f ${PROGS:F}
 
 ## Install ${PROGS:J, } and kbd-rus.png into ${DESTDIR}${PREFIX}
-install: ${PROGS}
+install: ${PROGS} ${SCRIPTS}
 	mkdir -p ${DESTDIR}${BINPREFIX} ${DESTDIR}${DATADIR}
-	cp -f ${PROGS:F} ${DESTDIR}${BINPREFIX}/
+	cp -f ${PROGS:F} ${SCRIPTS:F} ${DESTDIR}${BINPREFIX}/
 	cp -f kbd-ru.png ${DESTDIR}${DATADIR}/
 
 bidle: bidle.c
