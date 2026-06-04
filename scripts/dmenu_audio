@@ -3,8 +3,9 @@
 while true; do
 	muted=$(audioctl is-muted)
 	level=$(audioctl get-volume)
+	mic_muted=$(audioctl is-mic-muted)
+	mic_level=$(audioctl get-mic-volume)
 
-	[ "$muted" = 1 ] && m="Unmute" || m="Mute"
 	if [ "$muted" = 1 ]; then
 		m1=' (Muted)'
 		m2='Unmute'
@@ -13,8 +14,16 @@ while true; do
 		m2='Mute'
 	fi
 
-	p=$(printf 'Level: %.2f%s' "$level" "$m1")
-	r=$(printf '%s\n+\n-\n' "$m2" | dmenu -p "$p" -l 5) || break
+	if [ "$mic_muted" = 1 ]; then
+		mm1=' (Muted)'
+		mm2='Unmute Mic'
+	else
+		mm1=''
+		mm2='Mute Mic'
+	fi
+
+	p=$(printf 'Level: %.2f%s | Mic: %.2f%s' "$level" "$m1" "$mic_level" "$mm1")
+	r=$(printf '%s\n%s\n+\n-\nMic +\nMic -\n' "$m2" "$mm2" | dmenu -p "$p" -l 6) || break
 
 	case "$r" in
 	+)
@@ -31,9 +40,26 @@ while true; do
 		audioctl set-muted 0
 		break
 		;;
+	'Mic +')
+		audioctl set-mic-volume "$(printf 'scale=2; %.2f+0.1\n' "$mic_level" | bc)"
+		;;
+	'Mic -')
+		audioctl set-mic-volume "$(printf 'scale=2; %.2f-0.1\n' "$mic_level" | bc)"
+		;;
+	'Mute Mic')
+		audioctl set-mic-muted 1
+		break
+		;;
+	'Unmute Mic')
+		audioctl set-mic-muted 0
+		break
+		;;
 	*)
 		if echo "$r" | grep -qE '^(0|1|0\.[0-9]+)$'; then
 			audioctl set-volume "$r"
+			break
+		elif echo "$r" | grep -qE '^m(0|1|0\.[0-9]+)$'; then
+			audioctl set-mic-volume "${r#m}"
 			break
 		fi
 		;;
