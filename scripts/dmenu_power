@@ -5,7 +5,7 @@ Lock)
 	@SCRIPTS@/lock
 	;;
 Suspend)
-	@SCRIPTS@/lock
+	@SCRIPTS@/lock &
 	case "$(uname)" in
 	OpenBSD|FreeBSD)
 		doas zzz
@@ -29,7 +29,7 @@ Reboot)
 	doas reboot
 	;;
 Hibernate)
-	@SCRIPTS@/lock
+	@SCRIPTS@/lock &
 	case "$(uname)" in
 	OpenBSD)
 		ZZZ
