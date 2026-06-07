@@ -71,7 +71,7 @@ static void format_cpu (const struct status *st)
 	if (!st->has_cpu_usage && !st->has_cpu_speed && !st->has_cpu_temp)
 		return;
 
-	append ("[CPU " SYM_CPU);
+	append ("[" SYM_CPU);
 	
 	if (st->has_cpu_usage) {
 		append ("%d%%", st->cpu_usage);
@@ -102,18 +102,18 @@ static void format_ram (const struct status *st)
 		const char *s;
 		uint64_t u;
 	} units[] = {
-		{ "PiB",	1ull << 50 },
-		{ "TiB",	1ull << 40 },
-		{ "GiB",	1ull << 30 },
-		{ "MiB",	1ull << 20 },
-		{ "KiB",	1ull << 10 },
+		{ "P",	1ull << 50 },
+		{ "T",	1ull << 40 },
+		{ "G",	1ull << 30 },
+		{ "M",	1ull << 20 },
+		{ "K",	1ull << 10 },
 		{ NULL,		0 },
 	};
 
 	if (!st->has_mem_usage)
 		return;
 
-	append ("[RAM " SYM_RAM);
+	append ("[" SYM_RAM);
 
 	bytes = st->mem_usage;
 
@@ -131,11 +131,11 @@ static void format_ram (const struct status *st)
 			append ("%u.%02u", raw / 100, raw % 100);
 		}
 
-		append (" %s", u->s);
+		append ("%s", u->s);
 		goto done;
 	}
 
-	append ("%u B", (unsigned)bytes);
+	append ("%uB", (unsigned)bytes);
 
 done:
 	append ("] ");
@@ -191,7 +191,7 @@ static void format_bat (const struct status *st)
 		}
 	}
 
-	append ("[BAT ");
+	append ("[");
 
 	if (st->has_bat_perc && (!st->has_bat_charging || !st->bat_charging)) {
 		if (st->bat_perc < 25) {
@@ -290,7 +290,7 @@ static void format_timer (void)
 		reset = "";
 	}
 
-	append ("[TMR " SYM_TMR);
+	append ("[" SYM_TMR);
 
 	if (diff >= 0) {
 		append_duration (diff);

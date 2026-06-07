@@ -20,6 +20,7 @@ struct cpu_times {
 
 static int ncpu, nbat;
 static FILE *meminfo, *stat, **cpufreqs;
+static FILE *cputemp;
 static struct bat bats[MAXBATS];
 
 static bool parse_meminfo_line (char *line, const char *name, uint64_t *value)
@@ -156,6 +157,23 @@ static bool cpu_speed (int *speed)
 		return false;
 
 	*speed = total / num / 1000;
+	return true;
+}
+
+static bool cpu_temp (int *temp)
+{
+	char line[32];
+
+	if (cputemp == NULL)
+		return false;
+
+	rewind (cputemp);
+
+	if (fgets (line, sizeof (line), cputemp) == NULL)
+		return false;
+
+	/* hwmon reports millidegrees Celsius */
+	*temp = atoi (line) / 1000;
 	return true;
 }
 
@@ -431,6 +449,56 @@ static void vpn (struct status *st)
 	st->vpn = net_ping (VPN_GATEWAY) ? VPN_UP : VPN_DOWN;
 }
 
+/* Locate the CPU temperature sensor under /sys/class/hwmon, preferring the
+ * dedicated CPU drivers over the generic ACPI thermal zone. */
+static void find_cputemp (void)
+{
+	static const char *const names[] = {
+		"coretemp", "k10temp", "zenpower", "cpu_thermal", "acpitz",
+	};
+
+	for (size_t i = 0; i < sizeof (names) / sizeof (names[0]); ++i) {
+		struct dirent *ent;
+		DIR *dir;
+
+		dir = opendir ("/sys/class/hwmon");
+		if (dir == NULL)
+			return;
+
+		while ((ent = readdir (dir)) != NULL) {
+			char path[256], name[32];
+			FILE *f;
+
+			if (ent->d_name[0] == '.')
+				continue;
+
+			snprintf (path, sizeof (path), "/sys/class/hwmon/%.16s/name", ent->d_name);
+			f = fopen (path, "r");
+			if (f == NULL)
+				continue;
+			if (fgets (name, sizeof (name), f) != NULL)
+				name[strcspn (name, "\n")] = '\0';
+			else
+				name[0] = '\0';
+			fclose (f);
+
+			if (strcmp (name, names[i]) != 0)
+				continue;
+
+			snprintf (path, sizeof (path), "/sys/class/hwmon/%.16s/temp1_input", ent->d_name);
+			cputemp = fopen (path, "r");
+			if (cputemp != NULL)
+				setvbuf (cputemp, NULL, _IONBF, 0);
+			break;
+		}
+
+		closedir (dir);
+
+		if (cputemp != NULL)
+			return;
+	}
+}
+
 void init_backend (void)
 {
 	char path[256];
@@ -448,6 +516,8 @@ void init_backend (void)
 		snprintf (path, sizeof (path), "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq", i);
 		cpufreqs[i] = fopen (path, "r");
 	}
+
+	find_cputemp ();
 
 	nbat = 0;
 	for (int i = 0; i < MAXBATS; ++i) {
@@ -475,6 +545,7 @@ void update_status (struct status *st)
 	st->has_mem_usage = mem_usage (&st->mem_usage);
 	st->has_cpu_usage = cpu_usage (&st->cpu_usage);
 	st->has_cpu_speed = cpu_speed (&st->cpu_speed);
+	st->has_cpu_temp = cpu_temp (&st->cpu_temp);
 	bat (st);
 	net (st);
 	vpn (st);
