@@ -197,4 +197,5 @@ void update_status (struct status *st)
 	st->has_mem_usage = mem_usage (&st->mem_usage);
 	bat (st);
 	st->has_power = power (&st->power);
+	st->net_eth = st->net_wifi = NET_UNKNOWN;
 }

@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <unistd.h>
+#include <dirent.h>
 #include "bedstatus.h"
 
 #define NTIMES 9
@@ -250,7 +252,183 @@ static void bat (struct status *st)
 		st->has_bat_rem = true;
 		st->bat_rem = now / st->power * 60;
 	}
+}
 
+#define NETDIR "/sys/class/net"
+
+/* Read the first line of NETDIR/<iface>/<attr> into buf (newline stripped). */
+static bool net_read_attr (const char *iface, const char *attr, char *buf, size_t len)
+{
+	char path[256], *s;
+	FILE *file;
+
+	snprintf (path, sizeof (path), NETDIR "/%.32s/%.64s", iface, attr);
+
+	file = fopen (path, "r");
+	if (file == NULL)
+		return false;
+
+	s = fgets (buf, len, file);
+	fclose (file);
+
+	if (s == NULL)
+		return false;
+
+	s = strchr (buf, '\n');
+	if (s != NULL)
+		*s = '\0';
+
+	return true;
+}
+
+static bool net_has (const char *iface, const char *attr)
+{
+	char path[256];
+
+	snprintf (path, sizeof (path), NETDIR "/%.32s/%.64s", iface, attr);
+	return access (path, F_OK) == 0;
+}
+
+static bool net_is_wireless (const char *iface)
+{
+	return net_has (iface, "wireless") || net_has (iface, "phy80211");
+}
+
+/* Physical interfaces have a backing device; this filters out loopback,
+ * bridges and other purely virtual interfaces. */
+static bool net_is_physical (const char *iface)
+{
+	return net_has (iface, "device");
+}
+
+/* True if a default route (destination 0.0.0.0) goes through iface. */
+static bool net_has_default_route (const char *iface)
+{
+	char line[256], name[64];
+	unsigned long dest, gw, flags;
+	bool found = false;
+	FILE *file;
+
+	file = fopen ("/proc/net/route", "r");
+	if (file == NULL)
+		return false;
+
+	if (fgets (line, sizeof (line), file) == NULL) {	/* skip header */
+		fclose (file);
+		return false;
+	}
+
+	while (fgets (line, sizeof (line), file) != NULL) {
+		if (sscanf (line, "%63s %lx %lx %lx", name, &dest, &gw, &flags) != 4)
+			continue;
+
+		if (dest == 0 && strcmp (name, iface) == 0) {
+			found = true;
+			break;
+		}
+	}
+
+	fclose (file);
+	return found;
+}
+
+/* Send a single ping to host; true if it replies within the timeout. */
+static bool net_ping (const char *host)
+{
+	char cmd[128];
+	FILE *p;
+
+	/* one packet, 1s timeout, no DNS; output is irrelevant, only status */
+	snprintf (cmd, sizeof (cmd),
+		"ping -c1 -W1 -n -q %s >/dev/null 2>&1", host);
+
+	p = popen (cmd, "r");
+	if (p == NULL)
+		return false;
+
+	return pclose (p) == 0;
+}
+
+static enum net_state net_iface_state (const char *iface)
+{
+	char buf[32];
+	bool up = false;
+
+	if (net_read_attr (iface, "operstate", buf, sizeof (buf)))
+		up = (strcmp (buf, "up") == 0);
+
+	/* fall back to the carrier flag for drivers reporting "unknown" */
+	if (!up && net_read_attr (iface, "carrier", buf, sizeof (buf)))
+		up = (strcmp (buf, "1") == 0);
+
+	if (!up)
+		return NET_DOWN;
+
+	if (!net_has_default_route (iface))
+		return NET_ISOLATED;
+
+	return NET_CONNECTED;
+}
+
+/* Aggregate the state of all physical interfaces of the requested kind,
+ * keeping the best-connected one (the enum is ordered by connectivity). */
+static enum net_state net_type_state (bool want_wireless)
+{
+	enum net_state best = NET_UNKNOWN;
+	struct dirent *ent;
+	DIR *dir;
+
+	dir = opendir (NETDIR);
+	if (dir == NULL)
+		return NET_UNKNOWN;
+
+	while ((ent = readdir (dir)) != NULL) {
+		enum net_state s;
+
+		if (ent->d_name[0] == '.')
+			continue;
+
+		if (!net_is_physical (ent->d_name))
+			continue;
+
+		if (net_is_wireless (ent->d_name) != want_wireless)
+			continue;
+
+		s = net_iface_state (ent->d_name);
+		if (s > best)
+			best = s;
+	}
+
+	closedir (dir);
+	return best;
+}
+
+static void net (struct status *st)
+{
+	st->net_eth = net_type_state (false);
+	st->net_wifi = net_type_state (true);
+}
+
+/* True if the VPN interface exists and is up, i.e. a VPN is configured. */
+static bool vpn_iface_present (void)
+{
+	char buf[32];
+
+	/* wireguard interfaces commonly report "unknown" while running */
+	return net_read_attr (VPN_IFACE, "operstate", buf, sizeof (buf))
+	    && (strcmp (buf, "up") == 0 || strcmp (buf, "unknown") == 0);
+}
+
+static void vpn (struct status *st)
+{
+	/* Avoid the ping (which blocks until timeout when unreachable) unless a
+	 * VPN is actually configured. */
+	if (!vpn_iface_present ()) {
+		st->vpn = VPN_UNKNOWN;
+		return;
+	}
+
+	st->vpn = net_ping (VPN_GATEWAY) ? VPN_UP : VPN_DOWN;
 }
 
 void init_backend (void)
@@ -298,4 +476,6 @@ void update_status (struct status *st)
 	st->has_cpu_usage = cpu_usage (&st->cpu_usage);
 	st->has_cpu_speed = cpu_speed (&st->cpu_speed);
 	bat (st);
+	net (st);
+	vpn (st);
 }

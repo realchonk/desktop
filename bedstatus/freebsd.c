@@ -117,4 +117,5 @@ void update_status (struct status *st)
 	st->has_bat_rem = bat_rem (&st->bat_rem);
 	st->has_bat_charging = bat_charging (&st->bat_charging);
 	st->has_power = power (&st->power);
+	st->net_eth = st->net_wifi = NET_UNKNOWN;
 }

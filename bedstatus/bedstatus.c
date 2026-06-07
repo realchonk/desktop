@@ -7,6 +7,8 @@
 #include <time.h>
 #include <err.h>
 
+#include "bedstatus.h"
+
 #ifdef __OpenBSD__
 # include "openbsd.c"
 #elif defined(__linux__)
@@ -28,6 +30,9 @@
 #define SYM_TMR "\uf253 "
 #define SYM_MIC "\uf130"
 #define SYM_MIC_MUTED "\uf131"
+#define SYM_ETH "\uf796"
+#define SYM_WIFI "\uf1eb"
+#define SYM_VPN "\uf3ed"
 
 #define COLOR_NORMAL "\x01"
 #define COLOR_WARN "\x03"
@@ -324,10 +329,48 @@ static void format_mic (void)
 	if (!fetch_mic_muted (&muted))
 		return;
 
-	if (muted)
+	if (muted) {
 		append (SYM_MIC_MUTED " ");
-	else
+	} else {
 		append (COLOR_URGENT SYM_MIC COLOR_NORMAL " ");
+	}
+}
+
+static void format_net_iface (enum net_state state, const char *sym)
+{
+	switch (state) {
+	case NET_UNKNOWN:
+	case NET_DOWN:
+		/* interface unusable or absent: show nothing */
+		return;
+	case NET_ISOLATED:
+		append (COLOR_URGENT "%s" COLOR_NORMAL " ", sym);
+		break;
+	case NET_CONNECTED:
+		append ("%s ", sym);
+		break;
+	}
+}
+
+static void format_net (const struct status *st)
+{
+	format_net_iface (st->net_eth, SYM_ETH);
+	format_net_iface (st->net_wifi, SYM_WIFI);
+}
+
+static void format_vpn (const struct status *st)
+{
+	switch (st->vpn) {
+	case VPN_UNKNOWN:
+		append (COLOR_URGENT SYM_VPN COLOR_NORMAL " ");
+		return;
+	case VPN_DOWN:
+		append (COLOR_WARN SYM_VPN COLOR_NORMAL " ");
+		break;
+	case VPN_UP:
+		append (SYM_VPN " ");
+		break;
+	}
 }
 
 static void format_time (void)
@@ -345,6 +388,8 @@ static void format_status (const struct status *st)
 	format_cpu (st);
 	format_ram (st);
 	format_bat (st);
+	format_net (st);
+	format_vpn (st);
 	format_mic ();
 	format_timer ();
 	format_time ();
