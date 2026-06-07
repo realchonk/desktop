@@ -781,7 +781,22 @@ drawbar(Monitor *m)
 	/* draw status first so it can be overdrawn by tags later */
 	if (m == selmon) { /* status is only drawn on selected monitor */
 		drw_setscheme(drw, scheme[SchemeNorm]);
-		tw = TEXTW(stext) - lrpad + 2; /* 2px right padding */
+
+		/* compute status width, excluding color-control bytes */
+		tw = 2; /* 2px right padding */
+		for (ts = tp = stext; ; ++ts) {
+			if ((size_t)*ts > LENGTH(colors))
+				continue;
+			ch = *ts;
+			*ts = '\0';
+			tw += TEXTW(tp) - lrpad;
+			*ts = ch;
+			if (ch == '\0')
+				break;
+			tp = ts + 1;
+		}
+
+		ts = tp = stext;
 		while (1) {
 			if ((size_t)*ts > LENGTH(colors)) {
 				++ts;
