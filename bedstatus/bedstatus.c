@@ -388,10 +388,10 @@ static void format_status (const struct status *st)
 	format_cpu (st);
 	format_ram (st);
 	format_bat (st);
+	format_timer ();
 	format_net (st);
 	format_vpn (st);
 	format_mic ();
-	format_timer ();
 	format_time ();
 }
 
