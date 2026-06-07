@@ -246,6 +246,7 @@ static void updatewindowtype(Client *c);
 static void updatewmhints(Client *c);
 static void view(const Arg *arg);
 static void vstack(Monitor *m);
+static void hstack(Monitor *m);
 static Client *wintoclient(Window w);
 static Monitor *wintomon(Window w);
 static int xerror(Display *dpy, XErrorEvent *ee);
@@ -2004,6 +2005,24 @@ vstack(Monitor *m)
 		resize(c, m->wx + m->gappx, m->wy + ty, m->ww - (2*c->bw) - 2*m->gappx, h - (2*c->bw), 0);
 		if (ty + HEIGHT(c) < m->wh)
 			ty += HEIGHT(c) + m->gappx;
+	}
+}
+
+void
+hstack(Monitor *m)
+{
+	unsigned int i, n, w, tx;
+	Client *c;
+
+	for (n = 0, c = nexttiled(m->clients); c; c = nexttiled(c->next), n++);
+	if (n == 0)
+		return;
+
+	for (i = 0, tx = m->gappx, c = nexttiled(m->clients); c; c = nexttiled(c->next), ++i) {
+		w = (m->ww - tx) / (n - i) - m->gappx;
+		resize(c, m->wx + tx, m->wy + m->gappx, w - (2*c->bw), m->wh - (2*c->bw) - 2*m->gappx, 0);
+		if (tx + WIDTH(c) < m->ww)
+			tx += WIDTH(c) + m->gappx;
 	}
 }
 

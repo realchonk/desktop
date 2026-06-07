@@ -60,6 +60,7 @@ static const Layout layouts[] = {
 	{ "><>",      NULL },    /* no layout function means floating behavior */
 	{ "[M]",      monocle },
 	{ "===",      vstack },
+	{ "|||",      hstack },
 };
 
 /* key definitions */
@@ -114,12 +115,12 @@ static const Key keys[] = {
 	//{ MODKEY|ShiftMask,		XK_Return,	spawn,		{.v = script("launch-tabbed-st") } },
 	{ MODKEY|ShiftMask,		XK_t,		spawn,		{.v = script("toggle_touchpad")} },
 	{ MODKEY,			XK_b,		togglebar,	{0} },
-	{ MODKEY,			XK_j,		focusstack,	{.i = +1 } },
-	{ MODKEY,			XK_k,		focusstack,	{.i = -1 } },
-	{ MODKEY|ShiftMask,		XK_j,		inplacerotate,	{.i = +1} },
-	{ MODKEY|ShiftMask,		XK_k,		inplacerotate,	{.i = -1} },
-	{ MODKEY|ShiftMask,		XK_h,		inplacerotate,	{.i = +2} },
-	{ MODKEY|ShiftMask,		XK_l,		inplacerotate,	{.i = -2} },
+	{ MODKEY,			XK_j,		focusstack,	{.i = -1 } },
+	{ MODKEY,			XK_k,		focusstack,	{.i = +1 } },
+	{ MODKEY|ShiftMask,		XK_j,		inplacerotate,	{.i = -1} },
+	{ MODKEY|ShiftMask,		XK_k,		inplacerotate,	{.i = +1} },
+	{ MODKEY|ShiftMask,		XK_h,		inplacerotate,	{.i = -2} },
+	{ MODKEY|ShiftMask,		XK_l,		inplacerotate,	{.i = +2} },
 	//{ MODKEY,			XK_i,		incnmaster,	{.i = +1 } },
 	//{ MODKEY,			XK_d,		incnmaster,	{.i = -1 } },
 	{ MODKEY,			XK_h,		setmfact,	{.f = -0.05} },
@@ -131,6 +132,7 @@ static const Key keys[] = {
 	{ MODKEY,			XK_f,		setlayout,	{.v = &layouts[1]} },
 	{ MODKEY,			XK_m,		setlayout,	{.v = &layouts[2]} },
 	{ MODKEY,			XK_v,		setlayout,	{.v = &layouts[3]} },
+	{ MODKEY|ShiftMask,		XK_v,		setlayout,	{.v = &layouts[4]} },
 	{ MODKEY|ShiftMask,		XK_f,		togglefocus,	{0} },
 	//{ MODKEY,			XK_space,	setlayout,	{0} },
 	{ MODKEY|ShiftMask,		XK_space,	togglefloating,	{0} },
