@@ -15,6 +15,8 @@ Build with **`mk`** (BSD/Plan9 make, `/usr/sbin/mk`). Source files are `Mkfile` 
 - `mk <dir>` — build one component, e.g. `mk dwm`, `mk bedstatus` (mk recurses into subdirs natively; no `-C` needed). Subdir targets work too: `mk dwm/install`, `mk dwm/clean`.
 - `mk clean` — remove build artifacts
 
+When you build, also install: run `sudo mk install` after a successful `mk` (or `sudo mk <dir>/install` for a single component). The user expects installed binaries to track the source tree after each change.
+
 `mk` drives two reusable templates from `templates.mk`: `.template prog` (single binary) and `.template dir` (subdirectory recursion), expanded via `.expand`. Each component `Mkfile` sets `NAME` (and optionally `MAN`) then does `.expand prog`.
 
 ## Config / overrides
