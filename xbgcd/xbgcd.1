@@ -103,17 +103,3 @@ xbgcd &
 .Xr XSetWindowBackground 3 ,
 .Xr XAllocColor 3 ,
 .Xr pledge 2
-.Sh BUGS
-Several diagnostic strings inside
-.Pa xbgcd.c
-misspell the program name as
-.Qq xkbcd
-or
-.Qq xbcd .
-The binary itself is named
-.Nm .
-.Pp
-.Nm
-leaks the
-.Vt Display No handle on normal exit paths because the main loop never returns; this is
-unreachable in practice since the program runs until signaled.

@@ -32,14 +32,14 @@ int
 main(int argc, char *argv[])
 {
 	if (argc == 2 && !strcmp (argv[1], "-v")) {
-		die ("xkbcd-" VERSION);
+		die ("xbgcd-" VERSION);
 	} else if (argc != 1) {
-		die ("usage: xbcd [-v]");
+		die ("usage: xbgcd [-v]");
 	}
 
 	dpy = XOpenDisplay (NULL);
 	if (!dpy)
-		die ("xkbcd: unable to open display");
+		die ("xbgcd: unable to open display");
 
 #ifdef __OpenBSD__
 	if (pledge ("stdio", NULL) == -1)
@@ -72,8 +72,6 @@ main(int argc, char *argv[])
 		}
 		usleep (delay * 1000);
 	}
-	XCloseDisplay (dpy);
-	return 0;
 }
 
 static unsigned long
