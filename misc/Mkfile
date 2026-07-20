@@ -40,4 +40,4 @@ bidle: bidle.c
 	${CC} -o $@ bidle.c ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs x11 xscrnsaver` ${LDFLAGS}
 
 wt: wt.c
-	${CC} -o $@ wt.c ${CFLAGS} ${CPPFLAGS} -lncurses ${LDFLAGS}
+	${CC} -o $@ wt.c ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs ncurses` ${LDFLAGS}
