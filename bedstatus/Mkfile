@@ -1,4 +1,5 @@
 NAME = bedstatus
+MAN = 1
 
 .if "${OS}" == "OpenBSD"
 SRC_OS = openbsd.c

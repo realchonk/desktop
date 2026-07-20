@@ -1,0 +1,274 @@
+.Dd 2026-07-20
+.Dt BEDSTATUS 1
+.Os
+.Sh NAME
+.Nm bedstatus
+.Nd X11 status bar daemon for
+.Xr dwm 1 ,
+driven by a periodic root-window-name update
+.Sh SYNOPSIS
+.Nm
+.Sh DESCRIPTION
+.Nm
+is the status bar daemon for the author's
+.Xr dwm 1 Ns -based
+desktop.
+Once a second it samples the system, formats a one-line status string, and
+publishes it as the X root window's
+.Dv WM_NAME
+via
+.Xr XStoreName 3 .
+.Xr dwm 1
+reads that property and renders it in its bar.
+.Pp
+The status line is a concatenation of bracketed sections:
+.Bd -literal -offset indent
+\&[cpu] [ram] [bat] [wt] [tmr] [net] [vpn] [mic] TIME
+.Ed
+.Pp
+Each section is omitted if its backing data is unavailable
+(e.g.\& no battery on a desktop, no lock file from
+.Xr wt 1 ,
+no timer running).
+.Ss Sections
+.Bl -tag -width "bat" -compact
+.It Sy cpu
+CPU usage percent, average frequency, and temperature:
+.Li "[<icon> N% (XXXX MHz / NN\(deC)]" .
+.It Sy ram
+Used memory in IEC units:
+.Li "[<icon> N.NN G]" .
+.It Sy bat
+Battery percentage with icon chosen by charge level (empty/low/half/high/full),
+or the charging icon when AC is connected.
+Remaining runtime and current power draw are appended in parentheses:
+.Li "[<icon> N% (NNm/N.NNW)]" .
+Below 10% the icon blinks; below 20% it is shown in the urgent color; below 30%
+in the warning color.
+.It Sy wt
+Active
+.Xr wt 1
+session, rendered as
+.Li "[<stopwatch-icon> stem]"
+using the stem stored in the lock file
+(see
+.Sx FILES ) .
+Present only while a session is running.
+.It Sy tmr
+Countdown to the absolute Unix timestamp stored in the timer file
+(see
+.Sx FILES ) .
+Renders
+.Li "[<hourglass-icon> Nunit]"
+with units
+.Li d Ns / Ns Li h Ns / Ns Li m Ns / Ns Li s .
+Within the last 30 seconds the icon blinks, under 60 seconds it is urgent,
+under 120 seconds it is a warning.
+When the timer has elapsed, the section cycles through the letters of
+.Qq ELAPSED
+once per second.
+.It Sy net
+Ethernet and WiFi glyphs (when the corresponding interfaces exist).
+A connected interface is plain; an interface with carrier but no default route
+(isolated) is shown in the urgent color.
+.It Sy vpn
+Shield glyph.
+Plain when the VPN gateway is reachable, warning when configured but
+unreachable, urgent when no VPN interface exists at all.
+.It Sy mic
+Microphone indicator.
+The unmuted state is shown in the urgent color (to draw attention to a hot
+microphone); the muted state is plain.
+The mute state is queried via
+.Xr audioctl 1 .
+.It Sy time
+Formatted with
+.Li "%a %F %T" .
+.El
+.Sh COLOR CODES
+.Nm
+embeds single-byte sentinels in the string it publishes.
+These are interpreted by this repository's
+.Xr dwm 1
+build (a
+.Qq statuscolors Ns -style
+patch) as switches between the user-defined color sets:
+.Bl -tag -width "\\ex04" -compact
+.It Li \ex01
+.Pq Dv COLOR_NORMAL
+reset to the bar's default colors.
+.It Li \ex03
+.Pq Dv COLOR_WARN
+use the warning color set (typically yellow).
+.It Li \ex04
+.Pq Dv COLOR_URGENT
+use the urgent color set (typically red); the bar background also flashes
+between warning and urgent once per second when this is the active color.
+.El
+.Pp
+Every colored section is followed by a
+.Li \ex01
+reset.
+A stock
+.Xr dwm 1
+without color support will render the sentinels as nothing (they are
+non-printable control characters) and the text will appear uncolored.
+.Sh SIGNALS
+.Bl -tag -width "SIGUSR1" -compact
+.It Dv SIGUSR1
+Reset the timer-file cache
+.Pq set Li timer_ttl No to 0
+and force the next iteration to re-read the timer file.
+The signal also interrupts the inter-iteration
+.Xr sleep 3 ,
+so the refresh happens immediately.
+.It Dv SIGINT , Dv SIGTERM
+Default disposition (terminate).
+.El
+.Pp
+Both
+.Nm
+helpers and other tools (the
+.Sx timer
+helper script below, and
+.Xr wt 1
+after writing its lock file) signal
+.Nm
+with
+.Dv SIGUSR1
+to request a refresh.
+.Sh ENVIRONMENT
+.Bl -tag -width "XDG_RUNTIME_DIR" -compact
+.It Ev DISPLAY
+Selects the X server
+.Pq defaults to Li :0 No via Xlib .
+.It Ev XDG_RUNTIME_DIR
+Location of the timer file and the
+.Xr wt 1
+lock file.
+Falls back to
+.Pa /tmp
+if unset.
+.El
+.Sh FILES
+.Bl -tag -width "$XDG_RUNTIME_DIR/bedstatus-timer" -compact
+.It Pa $XDG_RUNTIME_DIR/bedstatus-timer
+.Pq or Pa /tmp/bedstatus-timer No if Ev XDG_RUNTIME_DIR No is unset
+Single line containing an absolute Unix timestamp (seconds since the epoch)
+at which the
+.Sy tmr
+section should fire.
+Read by
+.Nm
+with a cache TTL of 30 iterations; on parse failure the file is re-read
+every 15 iterations.
+.It Pa $XDG_RUNTIME_DIR/wt.active
+.Pq or Pa /tmp/wt.active No if Ev XDG_RUNTIME_DIR No is unset
+Lock file written by
+.Xr wt 1
+when a session is running.
+Format:
+.Li <PID> <stem>
+followed by a newline, where
+.Ar stem
+is the basename of the selected CSV with
+.Li .csv
+stripped.
+Read by
+.Nm
+every iteration (no caching).
+.El
+.Sh TIMER HELPER
+The
+.Pa timer
+shell script, installed alongside
+.Nm ,
+is the canonical writer of the timer file.
+It accepts:
+.Bl -tag -width "timer -h N" -compact
+.It Ic timer Fl s Ar sec
+Set the timer for
+.Ar sec
+seconds.
+.It Ic timer Fl m Ar min
+Set the timer for
+.Ar min
+minutes.
+.It Ic timer Fl h Ar hr
+Set the timer for
+.Ar hr
+hours.
+.It Ic timer Fl a
+Add to the existing timer instead of replacing it.
+May be combined with
+.Fl s Ns / Ns Fl m Ns / Ns Fl h Ns / Ns Fl a .
+.It Ic timer Fl r
+Remove the timer file.
+.It Ic timer
+.Pq no arguments
+Print the current timer file contents.
+.El
+.Pp
+After any modification
+.Pa timer
+runs
+.Li pkill -USR1 bedstatus
+to request an immediate refresh.
+.Sh EXAMPLES
+Start from
+.Pa ~/.xsession :
+.Bd -literal -offset indent
+bedstatus &
+.Ed
+.Pp
+Set a 5-minute kitchen timer:
+.Bd -literal -offset indent
+$ timer -m 5
+.Ed
+.Pp
+Add another 30 seconds:
+.Bd -literal -offset indent
+$ timer -a -s 30
+.Ed
+.Pp
+Clear it:
+.Bd -literal -offset indent
+$ timer -r
+.Ed
+.Sh SEE ALSO
+.Xr wt 1 ,
+.Xr audioctl 1 ,
+.Xr dwm 1 ,
+.Xr XStoreName 3 ,
+.Xr sndioctl 1 ,
+.Xr wpctl 1
+.Sh BUGS
+The VPN detection is hard-coded via
+.Dv VPN_GATEWAY
+(currently
+.Li 192.168.64.1 )
+and
+.Dv VPN_IFACE
+(currently
+.Li wg0 )
+in
+.Pa bedstatus.h .
+These are site-specific; on any other setup the
+.Sy vpn
+section should be recompiled or the constants edited.
+.Pp
+The
+.Sy mic
+section silently disappears when
+.Xr audioctl 1
+is not on
+.Ev PATH
+or returns nothing (e.g.\& on FreeBSD, where the wrapper has no dispatch).
+.Pp
+All glyphs are private-use Font Awesome code points in the U+F000 range; a
+Font Awesome installation is required for them to render \(em otherwise the
+icons appear as blank boxes.
+.Pp
+The timer file is read with a 30-second cache, so a very short timer set
+externally may briefly show a stale value until the next refresh signal
+arrives.
