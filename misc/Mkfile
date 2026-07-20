@@ -3,15 +3,21 @@ PROGS =	bidle			\
 	pinentry-dmenu2		\
 	slowcat			\
 	gurkx			\
-	xxed
+	xxed			\
+	wt
 
 SCRIPTS = audioctl
+
+MANS =	wt.1
 
 ## Installation directory
 PREFIX ?= /usr/local
 
 ## Installation directory for binaries
 BINPREFIX ?= ${PREFIX}/bin
+
+## Installation directory for manual pages
+MANPREFIX ?= ${PREFIX}/man
 
 ## Desktop data directory
 DATADIR ?= ${PREFIX}/share/desktop
@@ -24,10 +30,14 @@ clean:
 	rm -f ${PROGS:F}
 
 ## Install ${PROGS:J, } and kbd-rus.png into ${DESTDIR}${PREFIX}
-install: ${PROGS} ${SCRIPTS}
-	mkdir -p ${DESTDIR}${BINPREFIX} ${DESTDIR}${DATADIR}
+install: ${PROGS} ${SCRIPTS} ${MANS}
+	mkdir -p ${DESTDIR}${BINPREFIX} ${DESTDIR}${DATADIR} ${DESTDIR}${MANPREFIX}/man1
 	cp -f ${PROGS:F} ${SCRIPTS:F} ${DESTDIR}${BINPREFIX}/
 	cp -f kbd-ru.png ${DESTDIR}${DATADIR}/
+	cp -f ${MANS} ${DESTDIR}${MANPREFIX}/man1/
 
 bidle: bidle.c
 	${CC} -o $@ bidle.c ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs x11 xscrnsaver` ${LDFLAGS}
+
+wt: wt.c
+	${CC} -o $@ wt.c ${CFLAGS} ${CPPFLAGS} -lncurses ${LDFLAGS}

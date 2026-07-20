@@ -35,7 +35,7 @@ Two drift checks are available against an already-installed system:
 
 Suckless forks (each has its own `config.h` for customization, built against `../master.h`): `dwm/`, `dmenu/`, `st/`, `slock/`.
 
-Original software: `bedstatus/` (status bar), `xbgcd/` (X background setter), `netris/` (tetris, needs ncurses + `-lbsd` on Linux), `misc/` (small utilities: `bidle`, `flash`, `slowcat`, `gurkx`, `xxed`, `pinentry-dmenu2`), `scripts/` (`dmenu_*`, `launch-*`, etc.).
+Original software: `bedstatus/` (status bar), `xbgcd/` (X background setter), `netris/` (tetris, needs ncurses + `-lbsd` on Linux), `misc/` (small utilities: `bidle`, `flash`, `slowcat`, `gurkx`, `xxed`, `pinentry-dmenu2`, `wt`; see `misc/AGENTS.md`), `scripts/` (`dmenu_*`, `launch-*`, etc.).
 
 Deployed config: `dotfiles/` (copied to `$HOME` via `mk install-user`) and `etc/` (split into `common/`, `OpenBSD/`, `FreeBSD/`; installed to `/etc` via `mk install-etc`). There is no Linux-specific `etc/` dir.
 
@@ -61,3 +61,12 @@ Some `install-extra` targets set file modes you should not break:
 ## Scripts
 
 `scripts/Mkfile` auto-discovers any executable file in `scripts/` and at install time runs `sed` over `@PREFIX@`, `@SCRIPTS@`, `@TERM@`, `@DATADIR@`. To add a script, make it executable (`chmod +x`) and use those tokens instead of hardcoding paths. The root `Mkfile`'s `.sh` rule similarly substitutes `@VERSION@`/`@PREFIX@`/`@TERM@` for `.sh.in`-style sources.
+
+## Cross-component: `wt` ↔ `bedstatus`
+
+`misc/wt` (work-time stopwatch) and `bedstatus` are coupled by an undocumented runtime contract — preserve it when touching either:
+
+- `$XDG_RUNTIME_DIR/wt.active` (or `/tmp/wt.active` if `XDG_RUNTIME_DIR` is unset) is the lock file `wt` writes when a session is running. Format: `<PID> <stem>\n` where `<stem>` is the basename of the selected CSV with `.csv` stripped (e.g. `/home/u/Documents/wt/work.csv` → `work`).
+- `wt` refuses to start a new session while the file exists (no stale-lock recovery — manual `rm` is needed after a `kill -9`).
+- `bedstatus`'s `format_wt` reads the same file every refresh and renders `[<stopwatch-icon> stem]` between the BAT and TMR section when present.
+- Right after writing the lock file, `wt` runs `pgrep -x bedstatus` and sends `SIGUSR1` to each PID for an immediate refresh. bedstatus already registers `sig_reset` for `SIGUSR1`, which interrupts its `sleep(1)` loop.

@@ -28,6 +28,7 @@
 #define SYM_BAT_HIGH "\uf241 "
 #define SYM_BAT_FULL "\uf240 "
 #define SYM_TMR "\uf253 "
+#define SYM_WT "\uf2f2 "
 #define SYM_MIC "\uf130"
 #define SYM_MIC_MUTED "\uf131"
 #define SYM_ETH "\uf796"
@@ -41,6 +42,7 @@
 static size_t pos;
 static char buf[256];
 static char *timerpath;
+static char *wtpath;
 static int timer_ttl = 0;
 static const char *blink;
 
@@ -303,6 +305,36 @@ static void format_timer (void)
 	append ("]%s ", reset);
 }
 
+static void format_wt (void)
+{
+	char line[256], *s, *stem;
+	FILE *file;
+
+	file = fopen (wtpath, "r");
+	if (file == NULL)
+		return;
+
+	s = fgets (line, sizeof (line), file);
+	fclose (file);
+
+	if (s == NULL)
+		return;
+
+	stem = strchr (line, ' ');
+	if (stem == NULL)
+		return;
+	++stem;
+
+	s = strchr (stem, '\n');
+	if (s != NULL)
+		*s = '\0';
+
+	if (*stem == '\0')
+		return;
+
+	append ("[" SYM_WT "%s] ", stem);
+}
+
 static bool fetch_mic_muted (bool *muted)
 {
 	char out[16], *s;
@@ -388,6 +420,7 @@ static void format_status (const struct status *st)
 	format_cpu (st);
 	format_ram (st);
 	format_bat (st);
+	format_wt ();
 	format_timer ();
 	format_net (st);
 	format_vpn (st);
@@ -421,6 +454,7 @@ int main (int argc, char *argv[])
 		tmp = "/tmp";
 
 	asprintf (&timerpath, "%s/bedstatus-timer", tmp);
+	asprintf (&wtpath, "%s/wt.active", tmp);
 
 	signal (SIGUSR1, sig_reset);
 	init_backend ();

@@ -1,0 +1,211 @@
+.Dd 2026-07-20
+.Dt WT 1
+.Os
+.Sh NAME
+.Nm wt
+.Nd ncurses work-time stopwatch
+.Sh SYNOPSIS
+.Nm
+.Sh DESCRIPTION
+.Nm
+is a small ncurses-based stopwatch for tracking work sessions.
+Sessions are appended as rows to a CSV file under
+.Pa ~/Documents/wt/
+(the directory is created on first run).
+.Pp
+Each session is recorded as:
+.Bd -literal -offset indent
+date,start_time,end_time,description
+.Ed
+.Pp
+Dates are
+.Li YYYY-MM-DD ,
+times are
+.Li HH:MM
+(minute precision).
+The first line of the CSV is always a header; lines whose first field is not a
+valid date are skipped on load, so manual edits, blank lines, and stray
+comments are tolerated.
+Descriptions containing commas, double quotes, or newlines are written with
+RFC 4180 quoting, and have leading and trailing whitespace trimmed.
+.Pp
+The CSV is rewritten via
+.Pa <file>.wt.tmp
+(\(em
+.Xr fflush 3 ,
+.Xr fsync 2 ,
+.Xr fclose 3 ,
+.Xr rename 2
+\(em
+so a kill leaves the file with the last minute's data.
+A running session's
+.Li end_time
+is rolled forward every wall-clock minute and flushed.
+.Sh INTERACTION
+.Nm
+has three phases.
+.Ss Picker
+.Bl -tag -width "Enter" -compact
+.It Sy Up Ns | Ns Sy k , Sy Down Ns | Ns Sy j
+Move selection.
+.It Sy Enter
+Open the highlighted CSV.
+.It Sy n
+Create a new CSV (a
+.Li .csv
+suffix is appended if missing).
+.It Sy q Ns | Ns Sy Esc
+Quit
+.Nm .
+This is the only way to exit the program.
+.El
+.Ss Session list
+.Bl -tag -width "Space" -compact
+.It Sy Up Ns | Ns Sy k , Sy Down Ns | Ns Sy j
+Move selection.
+.It Sy Space
+Start a new session.
+Refused while the lock file exists (see
+.Sx FILES ) .
+.It Sy e
+Edit the highlighted row's description.
+.It Sy d
+Delete the highlighted row after a
+.Li y/N
+confirmation.
+.It Sy q Ns | Ns Sy Esc
+Return to the picker.
+.El
+.Ss Running
+A large
+.Li HH:MM:SS
+elapsed counter is shown and redrawn every second.
+.Bl -tag -width "Space" -compact
+.It Sy Space
+Stop the session.
+Refused while the description is empty (a beep is emitted and a hint is
+shown).
+.It Sy e
+Edit the description of the running session.
+.It Sy c
+Cancel the session: drop the in-progress row and rewrite the CSV.
+.It Sy q Ns | Ns Sy Esc
+Refused with a hint to use
+.Sy Space
+(stop) or
+.Sy c
+(cancel).
+.It Sy C-l
+Redraw the screen.
+.El
+.Sh EDITOR
+Description editing uses a custom readline-style line editor built on
+.Xr ncurses 3 .
+The current value is always prefilled.
+.Bl -tag -width "M-b , M-f , C-<Left>" -compact
+.It Sy Enter
+Accept the input.
+.It Sy Esc Ns | Ns Sy C-g
+Cancel \(em the input is discarded.
+.It Sy C-a , Sy Home
+Move to the start of the line.
+.It Sy C-e , Sy End
+Move to the end of the line.
+.It Sy C-b , Sy Left
+Move one character left.
+.It Sy C-f , Sy Right
+Move one character right.
+.It Sy M-b , Sy C-Left
+Move one word backwards.
+.It Sy M-f , Sy C-Right
+Move one word forwards.
+.It Sy C-d , Sy Delete
+Delete the character under the cursor.
+.It Sy C-h , Sy Backspace
+Delete the character before the cursor.
+.It Sy C-k
+Delete from the cursor to the end of the line.
+.It Sy C-u
+Delete from the start of the line to the cursor.
+.It Sy C-w
+Delete the word before the cursor.
+.It Sy C-t
+Transpose the characters around the cursor.
+.It Sy C-l
+Redraw the screen.
+.El
+.Pp
+.Dv ESCDELAY
+is overridden to 250 ms internally so a lone
+.Sy Esc
+is recognized quickly.
+.Sh ENVIRONMENT
+.Bl -tag -width "XDG_RUNTIME_DIR" -compact
+.It Ev HOME
+Used to locate
+.Pa ~/Documents/wt/ .
+.It Ev XDG_RUNTIME_DIR
+Used for the lock file
+.Pa wt.active ;
+falls back to
+.Pa /tmp
+if unset.
+.El
+.Sh FILES
+.Bl -tag -width "$XDG_RUNTIME_DIR/wt.active" -compact
+.It Pa ~/Documents/wt/
+Directory holding CSV session logs.
+One file per logical group, e.g.
+.Pa work.csv ,
+.Pa side-project.csv .
+.It Pa $XDG_RUNTIME_DIR/wt.active
+.Pq or Pa /tmp/wt.active No if Ev XDG_RUNTIME_DIR No is unset
+Lock file present while a session is running.
+The first line is
+.Li <PID> <stem>
+followed by a newline, where
+.Ar stem
+is the basename of the selected CSV with
+.Li .csv
+stripped.
+Its presence prevents
+.Nm
+from starting another session.
+.It Pa <file>.wt.tmp
+Temporary used for the atomic CSV replacement.
+.El
+.Pp
+After writing the lock file,
+.Nm
+runs
+.Xr pgrep 1
+for
+.Li bedstatus
+and sends each match a
+.Dv SIGUSR1
+so the status bar re-reads the lock file immediately.
+.Xr bedstatus 1
+renders
+.Li "[<stopwatch-icon> stem]"
+between its BAT and TMR sections while the lock is held.
+.Sh EXIT STATUS
+.Ex -std
+.Sh SEE ALSO
+.Xr bedstatus 1
+.Sh BUGS
+A
+.Dv SIGKILL
+(e.g.\&
+.Xr kill 1
+.Fl 9 )
+of
+.Nm
+leaves the lock file behind; a manual
+.Xr rm 1
+is then required before a new session can start \(em no stale-lock recovery is
+implemented.
+.Pp
+The lock file is written with plain
+.Xr fopen 3 ,
+not atomically, so a reader catching the write mid-flight may see a partial
+line.
