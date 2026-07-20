@@ -1,0 +1,104 @@
+.Dd 2026-07-20
+.Dt AUDIOCTL 1
+.Os
+.Sh NAME
+.Nm audioctl
+.Nd uniform control of the default audio output and input
+.Sh SYNOPSIS
+.Nm
+.Ar command
+.Op Ar arg
+.Nm
+.Op Fl h | Fl -help | Cm help
+.Sh DESCRIPTION
+.Nm
+provides a single subcommand interface to the default audio output
+(speakers) and input (microphone), independent of the underlying system.
+On
+.Ox
+it drives
+.Xr sndioctl 1 ;
+on Linux it drives
+.Xr wpctl 1
+against the
+.Qq @DEFAULT_SINK@
+and
+.Qq @DEFAULT_SOURCE@
+nodes.
+.Pp
+Volumes are reported and accepted as a linear fraction in the range
+.Sq 0.0
+to
+.Sq 1.0 .
+Mute state is reported as
+.Sq 1
+(muted) or
+.Sq 0
+(unmuted).
+.Sh COMMANDS
+.Bl -tag -width "set-mic-volume Ar volume" -compact
+.It Ic get-volume
+Print the output volume.
+.It Ic set-volume Ar volume
+Set the output volume.
+.It Ic is-muted
+Print
+.Sq 1
+if the output is muted,
+.Sq 0
+otherwise.
+.It Ic set-muted Ar 0 Ns | Ns Ar 1
+Mute or unmute the output.
+.It Ic get-mic-volume
+Print the microphone volume.
+.It Ic set-mic-volume Ar volume
+Set the microphone volume.
+.It Ic is-mic-muted
+Print
+.Sq 1
+if the microphone is muted,
+.Sq 0
+otherwise.
+.It Ic set-mic-muted Ar 0 Ns | Ns Ar 1
+Mute or unmute the microphone.
+.El
+.Sh OPTIONS
+.Bl -tag -width Ds
+.It Fl h , -help , Cm help
+Print the usage and exit.
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh EXAMPLES
+Set the output volume to 50%:
+.Bd -literal -offset indent
+$ audioctl set-volume 0.5
+.Ed
+.Pp
+Mute the microphone:
+.Bd -literal -offset indent
+$ audioctl set-mic-muted 1
+.Ed
+.Pp
+Poll the microphone mute state (this is the call made by
+.Xr bedstatus 1 Ns 's
+microphone indicator):
+.Bd -literal -offset indent
+$ audioctl is-mic-muted
+0
+.Ed
+.Sh SEE ALSO
+.Xr sndioctl 1 ,
+.Xr wpctl 1 ,
+.Xr bedstatus 1
+.Sh BUGS
+.Ox
+already ships a system
+.Xr audioctl 8
+with the same name; installing this script to
+.Pa /usr/local/bin/audioctl
+shadows it on
+.Ev PATH .
+.Pp
+FreeBSD is not handled by the per-OS dispatch; the subcommands silently
+no-op there.
