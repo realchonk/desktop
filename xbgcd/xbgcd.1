@@ -1,0 +1,119 @@
+.Dd 2026-07-20
+.Dt XBGCD 1
+.Os
+.Sh NAME
+.Nm xbgcd
+.Nd X background color daemon that cycles the root window through interpolated colors
+.Sh SYNOPSIS
+.Nm
+.Op Fl v
+.Sh DESCRIPTION
+.Nm
+slowly cycles the root window background through a sequence of RGB colors,
+interpolating between consecutive steps.
+Once started it runs forever, repainting the root window every
+.Ar delay
+milliseconds.
+.Pp
+At each iteration
+.Nm
+computes a color by linearly interpolating between the previous step and the
+current one, advancing a sub-step counter by
+.Ar sub_step_inc .
+When the counter exceeds 1.0 the current step becomes the previous one and the
+next step in the sequence is selected (wrapping around to the first).
+.Pp
+Colors are allocated via
+.Xr XAllocColor 3 ,
+so anything accepted by
+.Xr XParseColor 3
+would in principle work, but
+.Nm
+formats them as
+.Li #RRGGBB
+itself.
+.Pp
+On
+.Ox ,
+.Nm
+calls
+.Xr pledge 2
+with
+.Qq stdio
+after opening the display.
+.Sh OPTIONS
+.Bl -tag -width Ds
+.It Fl v
+Print version information to stderr and exit.
+.El
+.Sh CONFIGURATION
+.Nm
+is customized by editing
+.Pa config.h
+and recompiling \(em the suckless convention.
+The available knobs are:
+.Bl -tag -width "sub_step_inc" -compact
+.It Sy steps
+Array of
+.Li struct MyColor
+triplets
+.Pq Li { r , g , b }
+in the range
+.Sq 0.0
+to
+.Sq 1.0
+that
+.Nm
+cycles through.
+.It Sy initial_color
+.Li struct MyColor
+used as the
+.Qq previous
+color for the very first interpolation.
+.It Sy sub_step_inc
+Float in the range
+.Sq (0.0 , 1.0]
+added to the sub-step counter on every iteration; smaller values produce a
+slower, smoother transition.
+.It Sy delay
+Unsigned integer; milliseconds slept between iterations via
+.Xr usleep 3 .
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width "DISPLAY" -compact
+.It Ev DISPLAY
+Selects the X server
+.Pq defaults to Li :0 No via Xlib .
+.El
+.Sh SIGNALS
+Default disposition for all signals.
+In particular,
+.Dv SIGTERM
+and
+.Dv SIGINT
+terminate the daemon without restoring the original background.
+.Sh EXAMPLES
+Start from
+.Pa ~/.xsession :
+.Bd -literal -offset indent
+xbgcd &
+.Ed
+.Sh SEE ALSO
+.Xr xsetroot 1 ,
+.Xr XSetWindowBackground 3 ,
+.Xr XAllocColor 3 ,
+.Xr pledge 2
+.Sh BUGS
+Several diagnostic strings inside
+.Pa xbgcd.c
+misspell the program name as
+.Qq xkbcd
+or
+.Qq xbcd .
+The binary itself is named
+.Nm .
+.Pp
+.Nm
+leaks the
+.Vt Display No handle on normal exit paths because the main loop never returns; this is
+unreachable in practice since the program runs until signaled.

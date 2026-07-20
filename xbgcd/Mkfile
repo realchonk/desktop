@@ -1,4 +1,5 @@
 NAME = xbgcd
+MAN = 1
 
 xbgcd: xbgcd.c config.h
 	${CC} -o $@ xbgcd.c ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs x11` ${LDFLAGS}
