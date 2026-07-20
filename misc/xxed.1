@@ -1,0 +1,98 @@
+.Dd 2026-07-20
+.Dt XXED 1
+.Os
+.Sh NAME
+.Nm xxed
+.Nd simple interactive hex editor
+.Sh SYNOPSIS
+.Nm
+.Op Fl b Ar blocksize
+.Ar file
+.Sh DESCRIPTION
+.Nm
+opens
+.Ar file
+read/write and presents an interactive
+.Li >
+prompt.
+Commands may be abbreviated to a single letter where unambiguous.
+Entering a blank line repeats the most recent command.
+.Sh COMMANDS
+The following commands are available.
+.Bl -tag -width "seek [+-]offset" -compact
+.It Ic exit , quit , q
+Exit
+.Nm .
+.It Ic echo Op Ar arg ...
+Print the arguments separated by single spaces and a trailing newline.
+.It Ic p , print
+Print the next 16 lines (256 bytes maximum) starting at the current file
+position, as: 8-digit hex offset, 16 hex bytes (with an extra space after the
+8th byte), padding, a
+.Li " | "
+separator, then the ASCII representation with non-printable bytes shown as
+.Sq \&.
+.Pq a literal full stop .
+The file position advances by the number of bytes read.
+.It Ic s , seek Op Ar offset
+Seek to
+.Ar offset .
+With no argument, seek to the start of the file.
+A
+.Sq +
+or
+.Sq -
+prefix makes the seek relative to the current position; otherwise it is
+absolute.
+The new offset (hex) and block number are printed.
+.El
+.Pp
+.Ar offset
+is parsed by
+.Xr strtoll 3
+with base 0 (so a leading
+.Li 0x
+means hex) and may carry one of the following unit suffixes:
+.Bl -tag -width "g , G" -compact
+.It Sy b
+block (multiplied by
+.Ar blocksize )
+.It Sy w
+word (\(mu 2)
+.It Sy d
+doubleword (\(mu 4)
+.It Sy q
+quadword (\(mu 8)
+.It Sy s
+sector (\(mu 512)
+.It Sy k , K
+kibibyte (\(mu 1024)
+.It Sy m , M
+mebibyte (\(mu 1024^2)
+.It Sy g , G
+gibibyte (\(mu 1024^3)
+.El
+.Sh OPTIONS
+.Bl -tag -width Ds
+.It Fl b Ar blocksize
+Block size used as the multiplier for the
+.Sy b
+size suffix in the
+.Ic seek
+command.
+Defaults to 512.
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh EXAMPLES
+Inspect a binary using 2 KiB blocks:
+.Bd -literal -offset indent
+$ xxed -b 2048 firmware.bin
+> p
+> seek +0x200
+> q
+.Ed
+.Sh SEE ALSO
+.Xr hexdump 1 ,
+.Xr xxd 1 ,
+.Xr od 1

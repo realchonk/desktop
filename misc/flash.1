@@ -1,0 +1,73 @@
+.Dd 2026-07-20
+.Dt FLASH 1
+.Os
+.Sh NAME
+.Nm flash
+.Nd copy a file to a block device with sync and progress
+.Sh SYNOPSIS
+.Nm
+.Op Fl c
+.Op Fl b Ar blocksize
+.Ar file
+.Ar device
+.Sh DESCRIPTION
+.Nm
+copies
+.Ar file
+to
+.Ar device
+in fixed-size chunks.
+After every chunk
+.Nm
+calls
+.Xr fdatasync 2 ;
+a final
+.Xr fsync 2
+is issued before exit.
+A progress indicator \(em percentage, current size, total size \(em is printed
+to stderr.
+.Pp
+By default
+.Ar device
+is opened with
+.Dv O_WRONLY
+and must already exist.
+With
+.Fl c ,
+.Ar device
+is created with
+.Dv O_CREAT No | Dv O_TRUNC
+(mode 0644); if
+.Ar device
+is an existing directory, the output file is created inside it using the
+basename of
+.Ar file .
+.Sh OPTIONS
+.Bl -tag -width Ds
+.It Fl c
+Create
+.Ar device
+if it does not exist.
+If
+.Ar device
+is an existing directory, place the output inside it using the source's
+basename.
+.It Fl b Ar blocksize
+Copy buffer size in bytes.
+Defaults to 1048576 (1 MiB).
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh EXAMPLES
+Write an image to an SD card:
+.Bd -literal -offset indent
+# flash debian-12.img /dev/sdXc
+.Ed
+.Pp
+Copy a file into a directory, naming it after the source:
+.Bd -literal -offset indent
+$ flash -c debian-12.img /mnt/usb/
+.Ed
+.Sh SEE ALSO
+.Xr dd 1 ,
+.Xr cp 1

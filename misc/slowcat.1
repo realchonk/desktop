@@ -1,0 +1,49 @@
+.Dd 2026-07-20
+.Dt SLOWCAT 1
+.Os
+.Sh NAME
+.Nm slowcat
+.Nd print files at a limited rate
+.Sh SYNOPSIS
+.Nm
+.Op Fl s Ar baud
+.Op Ar
+.Sh DESCRIPTION
+.Nm
+reads each
+.Ar file
+(or standard input when no
+.Ar file
+is given, or when
+.Ar file
+is
+.Sq - )
+and writes the bytes to standard output, sleeping between small chunks so
+that the average rate approximates the configured baud rate.
+.Pp
+The chunk size is clamped to between 1 and 128 bytes; the inter-chunk delay
+is sized so that the average throughput matches the configured baud rate.
+.Sh OPTIONS
+.Bl -tag -width Ds
+.It Fl s Ar baud
+Target rate in bits per second.
+Defaults to 9600.
+.El
+.Sh EXIT STATUS
+.Bl -tag -width Ds
+.It 0
+All files were printed successfully.
+.It 2
+At least one file could not be opened; remaining files were still processed.
+.It 1
+Invalid
+.Fl s
+argument.
+.El
+.Sh EXAMPLES
+Emit a log at 300 baud:
+.Bd -literal -offset indent
+$ slowcat -s 300 /var/log/messages
+.Ed
+.Sh SEE ALSO
+.Xr cat 1
