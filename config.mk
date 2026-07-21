@@ -42,6 +42,12 @@ CFLAGS += -std=c2x -pedantic -Wall -Wextra -Wno-sign-compare -O2 ${CPPFLAGS}
 ## Linker Flags
 LDFLAGS +=
 
+## Cargo binary
+CARGO ?= cargo
+
+## Rust compiler flags
+RUSTFLAGS +=
+
 # Other settings
 
 ## Default Terminal
@@ -60,5 +66,5 @@ FONT_SIZE_TERM ?= 8
 -include config.mk.local
 
 .EXPORTS: PREFIX CONFDIR BINPREFIX MANPREFIX SCRIPTSDIR GAMESDIR DATADIR USERCONFDIR
-.EXPORTS: CC CPPFLAGS CFLAGS LDFLAGS
+.EXPORTS: CC CPPFLAGS CFLAGS LDFLAGS CARGO RUSTFLAGS
 .EXPORTS: TERM FONT FONT_SIZE_TOPBAR FONT_SIZE_TERM

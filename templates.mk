@@ -73,3 +73,59 @@ clean: clean-extra
 install: install-extra
 . endif
 .endt
+
+## Rust Program Template
+.template rust
+
+SRC != find src -name '*.rs'
+
+.DEFAULT: all
+.SUBDIRS: src
+
+. if !target(all)
+## Build ${NAME}
+all: ${NAME}
+
+.  if target(all-extra)
+all: all-extra
+.  endif
+. endif
+
+${NAME}: ${SRC} Cargo.toml
+	RUSTFLAGS="${RUSTFLAGS}" ${CARGO} build --release --target-dir ${.OBJDIR}/target
+	cp -f ${.OBJDIR}/target/release/${NAME} $@
+
+. if !target(clean)
+## Clean ${NAME}'s build artifacts
+clean:
+	(cd ${.OBJDIR} && rm -f ${NAME} *.core)
+	rm -rf ${.OBJDIR}/target
+
+.  if target(clean-extra)
+clean: clean-extra
+.  endif
+. endif
+
+. if !target(install)
+## Install ${NAME} into ${DESTDIR}${PREFIX}
+install: install-bin
+
+## Install ${NAME}'s binary into ${DESTDIR}${BINPREFIX}
+install-bin: ${NAME}
+	mkdir -p ${DESTDIR}${BINPREFIX}
+	cp -f ${.OBJDIR}/${NAME} ${DESTDIR}${BINPREFIX}/
+
+.  if target(install-extra)
+install: install-extra
+.  endif
+
+.  if defined(MAN)
+## Install ${NAME}'s manual into ${DESTDIR}${MANPREFIX}
+install-man: ${NAME}.${MAN}
+	mkdir -p ${DESTDIR}${MANPREFIX}/${MAN}
+	cp -f ${NAME}.${MAN} ${DESTDIR}${MANPREFIX}/${MAN}/
+install: install-man
+.  endif
+. endif
+
+.endt
