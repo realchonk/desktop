@@ -1,14 +1,5 @@
 SCRIPTS != find . -perm -0755 -and -type f -maxdepth 1 | tr '\n' ' '
 
-## Installation prefix
-PREFIX ?= /usr/local
-
-## Desktop scripts directory
-SCRIPTSDIR ?= ${PREFIX}/libexec/desktop
-
-## Desktop data directory
-DATADIR ?= ${PREFIX}/share/desktop
-
 all:
 
 clean:

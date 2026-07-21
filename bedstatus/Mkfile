@@ -12,7 +12,8 @@ SRC_OS = unsupported.c
 .endif
 
 install-extra: install-bin
-	cp -f timer ${DESTDIR}${PREFIX}/bin/
+	mkdir -p ${DESTDIR}${BINPREFIX}
+	cp -f timer ${DESTDIR}${BINPREFIX}/
 
 bedstatus: bedstatus.c ${SRC_OS}
 	${CC} -o $@ $* ${CFLAGS} ${CPPFLAGS} `pkg-config --cflags --libs x11` ${LDFLAGS}

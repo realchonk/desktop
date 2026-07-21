@@ -10,18 +10,6 @@ SCRIPTS = audioctl
 
 MANS =	audioctl.1 flash.1 slowcat.1 wt.1 xxed.1
 
-## Installation directory
-PREFIX ?= /usr/local
-
-## Installation directory for binaries
-BINPREFIX ?= ${PREFIX}/bin
-
-## Installation directory for manual pages
-MANPREFIX ?= ${PREFIX}/man
-
-## Desktop data directory
-DATADIR ?= ${PREFIX}/share/desktop
-
 ## Build ${PROGS:J, }
 all: ${PROGS}
 

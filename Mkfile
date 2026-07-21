@@ -2,33 +2,9 @@ include config.mk
 
 .SUBDIRS: bedstatus dmenu dwm misc netris scripts slock st xbgcd
 
-OS != uname
-
-HOME != echo $$HOME
-## User configuration files directory
-USERCONFDIR ?= ${HOME}
-
-## System configuration files directory
-CONFDIR ?= /etc
-
-## Default terminal
-TERM ?= st
-
 VERSION = "benni-0.8"
 
-## C Compiler
-CC ?= cc
-
-## C Compiler Flags
-CFLAGS ?= -std=c99 -O2 -Wall -Wextra
-
-## C Preprocessor Flags
-CPPFLAGS ?= -DVERSION=\"benni-0.1\" -DPREFIX=\"${PREFIX}\" -DTERM=\"${TERM}\" -D_GNU_SOURCE
-
-## Linker Flags
-LDFLAGS ?=
-
-.EXPORTS: CC CFLAGS CPPFLAGS OS TERM FONT FONT_SIZE_TERM FONT_SIZE_TOPBAR
+.EXPORTS: OS
 
 ## Check system configuration files
 check:

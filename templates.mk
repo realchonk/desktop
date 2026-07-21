@@ -1,16 +1,6 @@
 ## Program Template
 .template prog
 
-## Installation prefix for ${NAME}
-PREFIX ?= /usr/local
-
-## Installation directory for ${NAME}'s binary
-BINPREFIX ?= ${PREFIX}/bin
-
-. if defined(MAN)
-MANPREFIX ?= ${PREFIX}/man/man${MAN}
-. endif
-
 .DEFAULT: all
 
 . if !target(all)
@@ -39,7 +29,7 @@ install: install-bin
 ## Install ${NAME}'s binary into ${DESTDIR}${BINPREFIX}
 install-bin: ${NAME}
 	mkdir -p ${DESTDIR}${BINPREFIX}
-	cp -f ${.OBJDIR}/${NAME} ${DESTDIR}${BINPREFIX}
+	cp -f ${.OBJDIR}/${NAME} ${DESTDIR}${BINPREFIX}/
 
 .  if target(install-extra)
 install: install-extra
@@ -48,8 +38,8 @@ install: install-extra
 .  if defined(MAN)
 ## Install ${NAME}'s manual into ${DESTDIR}${MANPREFIX}
 install-man: ${NAME}.${MAN}
-	mkdir -p ${DESTDIR}${MANPREFIX}
-	cp -f ${NAME}.${MAN} ${DESTDIR}${MANPREFIX}/
+	mkdir -p ${DESTDIR}${MANPREFIX}/${MAN}
+	cp -f ${NAME}.${MAN} ${DESTDIR}${MANPREFIX}/${MAN}/
 install: install-man
 .  endif
 . endif

@@ -1,17 +1,64 @@
--include config.mk.local
-
-PREFIX = /usr/local
-MANPREFIX = ${PREFIX}/man
-SCRIPTDIR = ${PREFIX}/libexec/desktop
-GAMESDIR = /var/games
-TERM = st
-
-FONT ?= Liberation Mono
-FONT_SIZE_TOPBAR ?= 6
-FONT_SIZE_TERM ?= 8
-
+OS != uname
+HOME != echo $$HOME
 VERSION = "benni-0.1"
 
-CPPFLAGS = -D_BSD_SOURCE -D__BSD_VISIBLE -D_XOPEN_SOURCE=700 -DPREFIX=\"${PREFIX}\" -DVERSION=\"${VERSION}\" -DTERM=\"${TERM}\"  -DXINERAMA
-CFLAGS = -std=c2x -pedantic -Wall -Wextra -Wno-sign-compare -O2 ${CPPFLAGS}
+# Directories
 
+## Top-level installation directory
+PREFIX ?= /usr/local
+
+## System configuration files directory
+CONFDIR ?= /etc
+
+## Binary install directory
+BINPREFIX ?= ${PREFIX}/bin
+
+## Manual pages install directory
+MANPREFIX ?= ${PREFIX}/man
+
+## Scripts install directory
+SCRIPTSDIR ?= ${PREFIX}/libexec/desktop
+
+## Games data directory
+GAMESDIR ?= /var/games
+
+## Desktop data directory
+DATADIR ?= ${PREFIX}/share/desktop
+
+## User configuration files directory
+USERCONFDIR ?= ${HOME}
+
+# Compilation Settings
+
+## C Compiler
+CC ?= cc
+
+## C preprocessor flags
+CPPFLAGS += -D_BSD_SOURCE -D__BSD_VISIBLE -D_XOPEN_SOURCE=700 -DPREFIX=\"${PREFIX}\" -DVERSION=\"${VERSION}\" -DTERM=\"${TERM}\"  -DXINERAMA
+
+## C compiler flags
+CFLAGS += -std=c2x -pedantic -Wall -Wextra -Wno-sign-compare -O2 ${CPPFLAGS}
+
+## Linker Flags
+LDFLAGS +=
+
+# Other settings
+
+## Default Terminal
+TERM = st
+
+## Default Font
+FONT ?= Liberation Mono
+
+## Font size for the top bar
+FONT_SIZE_TOPBAR ?= 6
+
+## Default font size for the terminal
+FONT_SIZE_TERM ?= 8
+
+
+-include config.mk.local
+
+.EXPORTS: PREFIX CONFDIR BINPREFIX MANPREFIX SCRIPTSDIR GAMESDIR DATADIR USERCONFDIR
+.EXPORTS: CC CPPFLAGS CFLAGS LDFLAGS
+.EXPORTS: TERM FONT FONT_SIZE_TOPBAR FONT_SIZE_TERM
