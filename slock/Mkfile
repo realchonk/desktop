@@ -3,7 +3,7 @@ MAN = 1
 
 CFLAGS += -std=c2x
 
-.if "${OS}" == "Linux"
+.if "${OS}" == "Linux" || "${OS}" == "FreeBSD"
 LDFLAGS += -lcrypt
 .endif
 
