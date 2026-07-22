@@ -17,13 +17,16 @@ Build with **`mk`** (BSD/Plan9 make, `/usr/sbin/mk`). Source files are `Mkfile` 
 
 When you build, also install: run `sudo mk install` after a successful `mk` (or `sudo mk <dir>/install` for a single component). The user expects installed binaries to track the source tree after each change.
 
-`mk` drives two reusable templates from `templates.mk`: `.template prog` (single binary) and `.template dir` (subdirectory recursion), expanded via `.expand`. Each component `Mkfile` sets `NAME` (and optionally `MAN`) then does `.expand prog`.
+`mk` drives three reusable templates from `templates.mk`, expanded via `.expand`:
+- `.template prog` — a single C binary. The component `Mkfile` sets `NAME` (and optionally `MAN`) then does `.expand prog`.
+- `.template dir` — subdirectory recursion; the root `Mkfile` ends with `.expand dir`.
+- `.template rust` — a Rust binary built with `cargo build --release` from `src/*.rs` + `Cargo.toml`. Same `NAME`/`MAN`/`install-extra` hooks as `prog`. No component uses it yet; it's staged infrastructure.
 
 ## Config / overrides
 
-`config.mk` is the committed default. `config.mk.local` is **gitignored** and `-include`d from `config.mk` — put machine-local overrides here (e.g. `FONT_SIZE_TOPBAR`, `FONT_SIZE_TERM`). Don't edit `config.mk` for personal settings.
+`config.mk` is the committed default and now centralizes every install-layout and compiler variable (previously these were scattered across the root `Mkfile`, `templates.mk`, and per-component `Mkfile`s). `config.mk.local` is **gitignored** and `-include`d at the *end* of `config.mk` — put machine-local overrides here. Because all knobs are declared with `?=`/`+=`, both overrides (`FONT_SIZE_TERM = 10`) and appends (`CFLAGS += -g`) in `config.mk.local` work correctly. Don't edit `config.mk` for personal settings.
 
-Tunable knobs: `PREFIX` (default `/usr/local`), `TERM` (default `st`), `FONT`, `FONT_SIZE_TOPBAR`, `FONT_SIZE_TERM`, plus `DESTDIR`/`CONFDIR`/`USERCONFDIR` at install time.
+Knobs: layout — `PREFIX` (default `/usr/local`), `BINPREFIX`, `MANPREFIX`, `SCRIPTSDIR` (renamed from `SCRIPTDIR` during the rework — update stale references), `GAMESDIR`, `DATADIR`, `CONFDIR`, `USERCONFDIR`; compiler — `CC`, `CPPFLAGS`, `CFLAGS`, `LDFLAGS`; Rust — `CARGO` (default `cargo`), `RUSTFLAGS`; UI — `TERM` (default `st`), `FONT`, `FONT_SIZE_TOPBAR`, `FONT_SIZE_TERM`. `DESTDIR` is honored at install time.
 
 ## Verification
 
@@ -43,7 +46,7 @@ Deployed config: `dotfiles/` (copied to `$HOME` via `mk install-user`) and `etc/
 
 ## Platform conditionals
 
-`OS != uname` is exported from the root Mkfile. Component Mkfiles branch on it:
+`OS` is assigned `OS != uname` in `config.mk` and re-exported via `.EXPORTS: OS` in the root `Mkfile`. Component Mkfiles branch on it:
 - `bedstatus/` compiles `openbsd.c` / `freebsd.c` / `linux.c` / `unsupported.c`.
 - On Linux, `slock` links `-lcrypt` and `netris` links `-lbsd`. Linux users need `libbsd-dev` (or equivalent) and `libcrypt-dev`.
 - Don't assume a Linux-only toolchain; keep OpenBSD/FreeBSD paths working.
