@@ -75,3 +75,4 @@ Some `install-extra` targets set file modes you should not break:
 - `wt` refuses to start a new session while the file exists (no stale-lock recovery — manual `rm` is needed after a `kill -9`).
 - `bedstatus`'s `format_wt` reads the same file every refresh and renders `[<stopwatch-icon> stem]` between the BAT and TMR sections when present.
 - Right after writing the lock file, `wt` runs `pgrep -x bedstatus` and sends `SIGUSR1` to each PID for an immediate refresh. bedstatus already registers `sig_reset` for `SIGUSR1`, which interrupts its `sleep(1)` loop.
+- The desktop `lock` script (`scripts/lock`) sends `SIGUSR1` to any running `wt` via `pkill -USR1 -x wt` right before invoking `slock`, so an active work session is recorded up to the lock moment. `wt`'s `stop_session` handler ends the session and returns to the session list; with no session active the signal is a no-op.

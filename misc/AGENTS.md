@@ -29,9 +29,9 @@ Atomicity comes from the final `rename`. While a session runs, the in-progress r
 ## UI state machine
 
 1. **Picker** — lists `*.csv` in `~/Documents/wt/`. `n` creates a new file (auto-appends `.csv` if missing, touches empty file). `Enter` opens. `q`/Esc quits the program (this is the only way out).
-2. **Session list** — `DATE  START -> END  DURATION  DESCRIPTION`. `Space` starts a session (refused if the lock file exists). `e` edits the highlighted row's description. `d` deletes (with `y/N` confirm). `q`/Esc **goes back to the picker** (does not quit).
+2. **Session list** — `DATE  START -> END  DURATION  DESCRIPTION`. `Space` starts an empty session; `Enter` starts one prefilled with the highlighted row's description (both refused if the lock file exists). `e` edits the highlighted row's description. `d` deletes (with `y/N` confirm). `q`/Esc **goes back to the picker** (does not quit).
 3. **Running** — big bold `HH:MM:SS` elapsed, redraws every second. Keys:
-   - `Space` — stop. **Refused if description is empty** (beep + status line).
+   - `Space` — stop and save (empty descriptions are allowed).
    - `e` — edit description (prefilled, see Editor below).
    - `c` — cancel session (drops the in-progress row, rewrites file).
    - `q`/Esc — refused with a hint pointing to `Space` / `c`.
@@ -54,14 +54,16 @@ The editor uses `timeout(-1)` internally; the running loop resets `timeout(1000)
 
 - Path is computed lazily by `lock_path()` from `XDG_RUNTIME_DIR` (falls back to `/tmp` if unset or empty). Cached in a function-local `static char *p`.
 - Written atomically-ish on session start (`fopen("w")` + `fprintf("%d %s\n", pid, stem)` + `fclose`). Stem is the selected CSV's basename with `.csv` stripped.
-- `unlink`'d on every exit path of `run_session`: Space (stop), `c` (cancel), and the `got_signal` branch (SIGINT/SIGTERM → final flush with `end=now`, then unlink).
+- `unlink`'d on every exit path of `run_session`: Space (stop), `c` (cancel), the `got_signal` branch (SIGINT/SIGTERM → final flush with `end=now`, then unlink), and the `stop_session` branch (SIGUSR1 → same flush + unlink, but returns to the session list instead of exiting).
 - `show_sessions` calls `lock_exists()` (just `stat`) before starting; on conflict, beeps and shows `session active (<path>)`.
 - **No stale-lock recovery** — after `kill -9` the file remains and a manual `rm` is required. (Checking liveness via `kill(pid, 0)` would be the obvious extension.)
 - After writing the lock file, `wt` runs `pgrep -x bedstatus` via `popen` and sends `SIGUSR1` to every match, so bedstatus refreshes immediately (its `sig_reset` handler interrupts the `sleep(1)` loop). Best-effort: silently no-ops if `pgrep` is missing or no bedstatus is running.
 
 ## Signals
 
-`SIGINT` and `SIGTERM` are caught via `sigaction` (no `SA_RESTART`) and set a `volatile sig_atomic_t got_signal` flag. The flag is polled at the top of each loop. In `run_session`, signal-exit triggers a final flush + lock removal before returning.
+`SIGINT`, `SIGTERM`, and `SIGUSR1` are caught via `sigaction` (no `SA_RESTART`). `on_sig` routes by signo: SIGINT/SIGTERM set `got_signal` (polled at the top of each loop → exit); SIGUSR1 sets a separate `stop_session` flag. In `run_session`, `stop_session` triggers a final flush + lock removal and returns to the session list (the process stays alive). `stop_session` is cleared in the picker and session-list loops, so a SIGUSR1 received with no session active is a no-op.
+
+The desktop `lock` script sends `SIGUSR1` via `pkill -USR1 -x wt` immediately before locking, so an active session is recorded up to the lock moment.
 
 ## Misc conventions used
 

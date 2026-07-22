@@ -48,18 +48,22 @@ struct ctx {
 	int running;
 	time_t start_ts;
 	char status[STATUS_LEN];
+	char *new_desc;
 };
 
 static int K_CLEFT  = 0;
 static int K_CRIGHT = 0;
 
 static volatile sig_atomic_t got_signal = 0;
+static volatile sig_atomic_t stop_session = 0;
 
 static void
 on_sig(int signo)
 {
-	(void)signo;
-	got_signal = 1;
+	if (signo == SIGUSR1)
+		stop_session = 1;
+	else
+		got_signal = 1;
 }
 
 static void *
@@ -551,6 +555,7 @@ pick_file(const char *dir)
 				free_strv(files, n);
 				return NULL;
 			}
+			stop_session = 0;
 
 			getmaxyx(stdscr, rows, cols);
 
@@ -711,6 +716,7 @@ show_sessions(struct ctx *ctx)
 		int list_h;
 
 		if (got_signal) return 0;
+		stop_session = 0;
 
 		getmaxyx(stdscr, rows, cols);
 		list_h = rows - 5;
@@ -747,7 +753,7 @@ show_sessions(struct ctx *ctx)
 		if (ctx->nrows == 0)
 			mvprintw(3, 0, "(no sessions yet - press Space to start one)");
 
-		mvprintw(rows - 2, 0, "[Space] New session  [Up/Down] navigate  [e] edit  [d] delete");
+		mvprintw(rows - 2, 0, "[Space] New session  [Enter] reuse desc  [Up/Down] navigate  [e] edit  [d] delete");
 		mvprintw(rows - 1, 0, "[q] back");
 		if (ctx->status[0])
 			mvprintw(rows - 1, 30, "%s", ctx->status);
@@ -757,12 +763,17 @@ show_sessions(struct ctx *ctx)
 		ctx->status[0] = '\0';
 
 		if (c == 'q' || c == 27) return 0;
-		if (c == ' ') {
+		if (c == ' ' || c == '\n' || c == KEY_ENTER) {
 			if (lock_exists()) {
 				beep();
 				snprintf(ctx->status, sizeof(ctx->status),
 				    "session active (%s)", lock_path());
 			} else {
+				if ((c == '\n' || c == KEY_ENTER) && ctx->nrows > 0) {
+					free(ctx->new_desc);
+					ctx->new_desc = xstrdup(ctx->rows[sel].desc ?
+					    ctx->rows[sel].desc : "");
+				}
 				return 1;
 			}
 		}
@@ -854,7 +865,8 @@ run_session(struct ctx *ctx)
 	fill_date(r->date, sizeof(r->date), start_ts);
 	fill_time(r->start, sizeof(r->start), start_ts);
 	r->end[0] = '\0';
-	r->desc = xstrdup("");
+	r->desc = ctx->new_desc ? ctx->new_desc : xstrdup("");
+	ctx->new_desc = NULL;
 	ctx->running = 1;
 	ctx->start_ts = start_ts;
 
@@ -877,6 +889,18 @@ run_session(struct ctx *ctx)
 			return;
 		}
 
+		if (stop_session) {
+			stop_session = 0;
+			now = time(NULL);
+			fill_time(r->end, sizeof(r->end), now);
+			write_csv(ctx);
+			ctx->running = 0;
+			lock_remove();
+			snprintf(ctx->status, sizeof(ctx->status),
+			    "session ended (screen lock)");
+			return;
+		}
+
 		timeout(1000);
 		now = time(NULL);
 		elapsed = (long)(now - start_ts);
@@ -895,12 +919,6 @@ run_session(struct ctx *ctx)
 		ctx->status[0] = '\0';
 
 		if (ch == ' ') {
-			if (!r->desc || !r->desc[0]) {
-				beep();
-				snprintf(ctx->status, sizeof(ctx->status),
-				    "description required - press 'e'");
-				continue;
-			}
 			fill_time(r->end, sizeof(r->end), now);
 			write_csv(ctx);
 			ctx->running = 0;
@@ -939,6 +957,7 @@ free_ctx(struct ctx *ctx)
 		free(ctx->rows[i].desc);
 	free(ctx->rows);
 	free(ctx->path);
+	free(ctx->new_desc);
 }
 
 static void
@@ -959,6 +978,7 @@ main(void)
 	sa.sa_handler = on_sig;
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGTERM, &sa, NULL);
+	sigaction(SIGUSR1, &sa, NULL);
 
 	dir = wt_dir();
 	if (mkdir_p(dir) != 0)

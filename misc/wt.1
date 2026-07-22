@@ -64,9 +64,12 @@ This is the only way to exit the program.
 .It Sy Up Ns | Ns Sy k , Sy Down Ns | Ns Sy j
 Move selection.
 .It Sy Space
-Start a new session.
+Start a new (empty) session.
 Refused while the lock file exists (see
 .Sx FILES ) .
+.It Sy Enter
+Start a new session whose description is prefilled from the highlighted row.
+Refused while the lock file exists.
 .It Sy e
 Edit the highlighted row's description.
 .It Sy d
@@ -82,9 +85,8 @@ A large
 elapsed counter is shown and redrawn every second.
 .Bl -tag -width "Space" -compact
 .It Sy Space
-Stop the session.
-Refused while the description is empty (a beep is emitted and a hint is
-shown).
+Stop the session and record it.
+An empty description is allowed; the row is kept as-is.
 .It Sy e
 Edit the description of the running session.
 .It Sy c
@@ -188,6 +190,18 @@ so the status bar re-reads the lock file immediately.
 renders
 .Li "[<stopwatch-icon> stem]"
 between its BAT and TMR sections while the lock is held.
+.Sh SIGNALS
+.Bl -tag -width "SIGUSR1" -compact
+.It Dv SIGINT , Dv SIGTERM
+End any active session, record it, remove the lock file, and exit.
+.It Dv SIGUSR1
+End the active session
+.Pq if one is running ,
+record it, remove the lock file, and return to the session list without
+exiting.
+The desktop lock script sends this so work time is captured when the screen
+locks; it is ignored when no session is active.
+.El
 .Sh EXIT STATUS
 .Ex -std
 .Sh SEE ALSO
