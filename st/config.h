@@ -96,8 +96,17 @@ unsigned int tabspaces = 8;
 /* bg opacity */
 float alpha = 0.85;
 
-/* Terminal colors (16 first used in escape sequence) */
-static const char *colorname[] = {
+/*
+ * Terminal colors (16 first used in escape sequence).
+ *
+ * Two colorschemes: 0 = dark (default), 1 = light.  The light scheme is
+ * tuned for coding in direct sunlight on a dim screen - dark ink on a warm
+ * off-white paper, with saturated syntax colours (pale tones wash out in
+ * sun).  colorname[] below is the live palette x.c reads; it is reloaded
+ * from colorschemes[colorscheme_idx] at the top of xloadcols() and cycled
+ * by the togglecolorscheme() shortcut (Ctrl+Shift+F6).
+ */
+static const char *const colorname_dark[] = {
 	/* 8 normal colors */
 	"#1c1f2b",
 	"#ff5370",
@@ -126,6 +135,41 @@ static const char *colorname[] = {
 	"#BFC7D5", /* default foreground colour */
 	"#242837", /* default background colour */
 };
+
+static const char *const colorname_light[] = {
+	/* 8 normal colors */
+	"#2a2f3a",
+	"#c0392b",
+	"#2e7d32",
+	"#b07a00",
+	"#1f5fb0",
+	"#9c27b0",
+	"#00838f",
+	"#3a3f4b",
+
+	/* 8 bright colors */
+	"#6b7280",
+	"#d94f3c",
+	"#3fa442",
+	"#d49a00",
+	"#2f7fd6",
+	"#b347d1",
+	"#00a6b5",
+	"#1f232b",
+
+	[255] = 0,
+
+	"#2a2f3a", /* default cursor colour */
+	"#c7ccd1", /* default reverse cursor colour */
+	"#1f232b", /* default foreground colour */
+	"#f4f1ea", /* default background colour */
+};
+
+static const char *const *const colorschemes[] = { colorname_dark, colorname_light };
+#define NCOLORSCHEMES ((int)(sizeof(colorschemes) / sizeof(colorschemes[0])))
+static int colorscheme_idx = 0;
+
+static const char *colorname[260];
 
 
 /*
@@ -202,6 +246,7 @@ static Shortcut shortcuts[] = {
 	{ MODKEY,              	XK_period,      zoom,           {.f = +1} },
 	{ MODKEY,              	XK_comma,       zoom,           {.f = -1} },
 	{ TERMMOD,              XK_Home,        zoomreset,      {.f =  0} },
+	{ TERMMOD,              XK_L,           togglecolorscheme, {.i =  0} },
 	{ TERMMOD,              XK_C,           clipcopy,       {.i =  0} },
 	{ TERMMOD,              XK_V,           clippaste,      {.i =  0} },
 	{ TERMMOD,              XK_Y,           selpaste,       {.i =  0} },

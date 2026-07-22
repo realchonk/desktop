@@ -59,6 +59,7 @@ static void selpaste(const Arg *);
 static void zoom(const Arg *);
 static void zoomabs(const Arg *);
 static void zoomreset(const Arg *);
+static void togglecolorscheme(const Arg *);
 //static void ttysend(const Arg *);
 void kscrollup(const Arg *);
 void kscrolldown(const Arg *);
@@ -811,6 +812,8 @@ xloadcols(void)
 	static int loaded;
 	Color *cp;
 
+	memcpy(colorname, colorschemes[colorscheme_idx], sizeof(colorname));
+
 	if (loaded) {
 		for (cp = dc.col; cp < &dc.col[dc.collen]; ++cp)
 			XftColorFree(xw.dpy, xw.vis, xw.cmap, cp);
@@ -834,6 +837,14 @@ xloadcols(void)
 	dc.col[defaultbg].pixel &= 0x00FFFFFF;
 	dc.col[defaultbg].pixel |= (unsigned char)(0xff * alpha) << 24;
 	loaded = 1;
+}
+
+void
+togglecolorscheme(UNUSED const Arg *dummy)
+{
+	colorscheme_idx = (colorscheme_idx + 1) % NCOLORSCHEMES;
+	xloadcols();
+	redraw();
 }
 
 int
