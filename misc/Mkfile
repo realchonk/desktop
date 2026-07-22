@@ -8,7 +8,7 @@ PROGS =	bidle			\
 
 SCRIPTS = audioctl
 
-MANS =	audioctl.1 flash.1 slowcat.1 wt.1 xxed.1
+MANS =	audioctl.1 bidle.1 flash.1 slowcat.1 wt.1 xxed.1
 
 ## Build ${PROGS:J, }
 all: ${PROGS}

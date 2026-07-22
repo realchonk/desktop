@@ -1,0 +1,134 @@
+.Dd 2026-07-21
+.Dt BIDLE 1
+.Os
+.Sh NAME
+.Nm bidle
+.Nd run a program after a period of X inactivity
+.Sh SYNOPSIS
+.Nm
+.Op Fl t Ar timeout
+.Op Fl p Ar program
+.Op Fl i Ar interval
+.Op Fl nv
+.Sh DESCRIPTION
+.Nm
+watches the X server for user inactivity and runs
+.Ar program
+once the keyboard and pointer have been idle for at least
+.Ar timeout
+seconds.
+It is a portable replacement for
+.Xr xidle 1 ,
+which depends on the OpenBSD-specific XIDLE extension:
+.Nm
+queries the MIT-SCREEN-SAVER extension for the idle time \(em the same approach
+taken by
+.Xr xautolock 1
+\(em which is available on
+.Ox ,
+.Fx ,
+and Linux alike.
+.Pp
+Every
+.Ar interval
+seconds
+.Nm
+polls the idle time and, the first time it meets the threshold within an idle
+episode, forks
+.Ar program
+into its own session.
+Only one invocation is issued per episode: a subsequent run is suppressed until
+activity is observed again, so a program that exits immediately
+.Pq e.g.\& a misconfigured locker
+does not cause a respawn storm.
+The child is detached via
+.Xr setsid 2
+and reaped automatically
+.Pq Dv SIGCHLD No is set to Dv SIG_IGN ,
+so
+.Nm
+never blocks waiting for it.
+.Pp
+.Nm
+runs until killed by a signal or the display connection is lost.
+.Pp
+On
+.Ox ,
+.Nm
+calls
+.Xr pledge 2
+with
+.Qq stdio rpath proc exec
+after opening the display.
+.Sh OPTIONS
+.Bl -tag -width Ds
+.It Fl t Ar timeout
+Idle threshold in seconds before
+.Ar program
+is launched.
+Defaults to 300 (5 minutes).
+.It Fl p Ar program
+Program to run, located via
+.Ev PATH
+with
+.Xr execlp 3 .
+Defaults to
+.Xr slock 1 .
+.It Fl i Ar interval
+Seconds between idle-time polls.
+Defaults to 1.
+.It Fl n
+Dry-run: print the would-be command to stderr instead of forking.
+Implies no child is ever spawned.
+.It Fl v
+Verbose: log the configured values and, on each poll, the current idle time
+to stderr.
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width "DISPLAY" -compact
+.It Ev DISPLAY
+X server to connect to.
+.It Ev PATH
+Used to locate
+.Ar program .
+.El
+.Sh SIGNALS
+.Bl -tag -width "SIGCHLD" -compact
+.It Dv SIGINT , Dv SIGTERM
+Close the display and exit cleanly.
+.It Dv SIGCHLD
+Set to
+.Dv SIG_IGN
+so spawned children are reaped without blocking the poll loop.
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh EXAMPLES
+Lock the screen after 5 minutes of inactivity, started from the session:
+.Bd -literal -offset indent
+bidle &
+.Ed
+.Pp
+Run a custom locker after 10 minutes, polling every 5 seconds:
+.Bd -literal -offset indent
+bidle -t 600 -p xlock -i 5 &
+.Ed
+.Pp
+Inspect the idle reporting without launching anything:
+.Bd -literal -offset indent
+$ bidle -n -t 1 -v
+.Ed
+.Sh SEE ALSO
+.Xr slock 1 ,
+.Xr xidle 1 ,
+.Xr xautolock 1 ,
+.Xr Xss 3 ,
+.Xr pledge 2
+.Sh BUGS
+The idle time is server-wide \(em time since the last input event anywhere on
+the display \(em and not per-window.
+.Pp
+A program that injects synthetic input events
+.Pq e.g.\& Xr xdotool 1
+resets the idle counter and so can prevent the timeout from ever firing; this
+is inherent to any idle-based locker.
