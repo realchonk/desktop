@@ -1,0 +1,78 @@
+#!/bin/sh
+
+depends_common='
+bat
+cargo?
+cloc?
+cu
+dbus-launch
+doas
+dunst
+firefox?
+flameshot
+git
+got
+htop
+jq
+mk
+nc?
+nmap?
+nsxiv
+pass
+qalc
+rg
+rlwrap?
+rust-analyzer?
+signal-desktop|gurk?
+ssh
+startx
+thunderbird?
+typst?
+vim|nvim
+xclip
+xdotool
+xinput
+xrandr
+xset
+zathura
+'
+
+depends_Linux='bluetui? mount.nfs oksh rustup? wpctl'
+depends_OpenBSD=''
+depends_FreeBSD='oksh'
+
+depends_os=$(eval echo "\"\${depends_$(uname)}\"")
+
+rc=0
+
+for string in ${depends_common} ${depends_os}; do
+	variants=$(echo "$string" | sed 's/?$//')
+	optional=$(echo "$string" | grep -q '?$' && echo true || echo false)
+
+	has=false
+	IFS='|'
+	for prog in $variants; do
+		if command -v "$prog" >/dev/null 2>&1; then
+			has=true
+			break
+		fi
+	done
+	unset IFS
+
+	"$has" && continue
+	variants=$(echo "$variants" | sed 's/|/ or /')
+
+	if "$optional"; then
+		printf 'missing optional dependency: %s\n' "$variants"
+	else
+		printf 'missing required dependency: %s\n' "$variants"
+		rc=$((rc + 1))
+	fi
+done
+
+if [ "$rc" -eq 0 ]; then
+	echo 'OK'
+else
+	printf '%u missing required dependencies.\n' "$rc"
+	exit 1
+fi

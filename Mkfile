@@ -9,6 +9,7 @@ VERSION = "benni-0.8"
 ## Check system configuration files
 check:
 	find etc/common etc/$$(uname) -not -type d | awk '{a=$$0; sub(/etc\/[^\/]+/, "/etc", a); system("diff -u " a " " $$0)}'
+	./check_depends
 
 ## Check user configuration files
 check-user:
