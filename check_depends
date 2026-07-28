@@ -3,6 +3,7 @@
 depends_common='
 bat
 cargo?
+cc
 cloc?
 cu
 dbus-launch
@@ -19,6 +20,7 @@ nc?
 nmap?
 nsxiv
 pass
+pkg-config
 qalc
 rg
 rlwrap?
