@@ -1,3 +1,4 @@
 bin
 *.swp
 config.mk.local
+.patch
