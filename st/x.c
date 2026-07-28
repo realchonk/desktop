@@ -5,6 +5,9 @@
 #include <limits.h>
 #include <locale.h>
 #include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <sys/select.h>
 #include <time.h>
 #include <unistd.h>
@@ -1981,6 +1984,14 @@ resize(XEvent *e)
 	cresize(e->xconfigure.width, e->xconfigure.height);
 }
 
+static volatile sig_atomic_t pending_scheme = -1;
+
+static void
+sigscheme(int signo)
+{
+	pending_scheme = (signo == SIGUSR1) ? 0 : 1;
+}
+
 void
 run(void)
 {
@@ -2011,6 +2022,17 @@ run(void)
 	cresize(w, h);
 
 	for (timeout = -1, drawing = 0, lastblink = (struct timespec){0};;) {
+		if (pending_scheme >= 0) {
+			int idx = pending_scheme;
+			pending_scheme = -1;
+			if (idx != colorscheme_idx) {
+				colorscheme_idx = idx;
+				xloadcols();
+				redraw();
+				XFlush(xw.dpy);
+			}
+		}
+
 		FD_ZERO(&rfd);
 		FD_SET(ttyfd, &rfd);
 		FD_SET(xfd, &rfd);
@@ -2097,6 +2119,36 @@ usage(void)
 	    " [stty_args ...]\n", argv0, argv0);
 }
 
+static void
+loadscheme(void)
+{
+	char path[512], buf[16];
+	const char *xdh, *home;
+	FILE *f;
+
+	xdh = getenv("XDG_DATA_HOME");
+	if (xdh != NULL && xdh[0] != '\0')
+		snprintf(path, sizeof(path), "%s/desktop/themeswitch.state", xdh);
+	else {
+		home = getenv("HOME");
+		if (home == NULL)
+			return;
+		snprintf(path, sizeof(path), "%s/.local/share/desktop/themeswitch.state", home);
+	}
+
+	f = fopen(path, "r");
+	if (f == NULL)
+		return;
+	if (fgets(buf, sizeof(buf), f) != NULL) {
+		buf[strcspn(buf, "\n")] = '\0';
+		if (strcmp(buf, "light") == 0)
+			colorscheme_idx = 1;
+		else if (strcmp(buf, "dark") == 0)
+			colorscheme_idx = 0;
+	}
+	fclose(f);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -2163,9 +2215,16 @@ run:
 	cols = MAX(cols, 1);
 	rows = MAX(rows, 1);
 	tnew(cols, rows);
+	loadscheme();
 	xinit(cols, rows);
 	xsetenv();
 	selinit();
+
+	struct sigaction sa = { .sa_handler = sigscheme };
+	sigemptyset(&sa.sa_mask);
+	sigaction(SIGUSR1, &sa, NULL);
+	sigaction(SIGUSR2, &sa, NULL);
+
 	run();
 
 	return 0;

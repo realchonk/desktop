@@ -6,7 +6,7 @@ PROGS =	bidle			\
 	xxed			\
 	wt
 
-SCRIPTS = audioctl
+SCRIPTS = audioctl themeswitch
 
 MANS =	audioctl.1 bidle.1 flash.1 slowcat.1 wt.1 xxed.1
 

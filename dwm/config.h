@@ -81,6 +81,7 @@ static const char *termcmd[]  = { TERM, NULL };
 static const char *termcmd2[]  = { "vertigo", NULL };
 static const char *xkillcmd[]  = { "xkill", NULL };
 static const char *flameshotcmd[]  = { "flameshot", "gui", NULL };
+static const char *themecmd[] = { "themeswitch", "toggle", NULL };
 
 #define script(...) ((const char *[]){ "/bin/sh", PREFIX "/libexec/desktop/" __VA_ARGS__, NULL })
 #define dmscript(...) script(__VA_ARGS__, DMENU_ARGS)
@@ -107,6 +108,7 @@ static const Key keys[] = {
 	{ MODKEY,			0x6de,		spawn,		{.v = dmscript("dmenu_xrandr") }},
 	{ MODKEY|ControlMask,		XK_h,		spawn,		{.v = runst("htop") }},
 	{ MODKEY,			XK_c,		spawn,		{.v = runst("env", "LC_ALL=C", "qalc") }},
+	{ MODKEY|ControlMask,		XK_c,		spawn,		{.v = themecmd }},
 	{ MODKEY,			XK_Escape,	spawn,		{.v = script("lock") } },
 	{ MODKEY|ShiftMask,		XK_Escape,	spawn,		{.v = dmscript("dmenu_power") } },
 	{ MODKEY,			XK_Return,	spawn,		{.v = termcmd } },

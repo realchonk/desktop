@@ -2,3 +2,6 @@ date,start_time,end_time,description
 2026-07-21,18:55,20:13,write a replacement for xidle
 2026-07-22,13:55,14:06,automatically stop wt when locking the screen
 2026-07-22,18:51,19:15,do some AI junk
+2026-07-28,15:23,15:37,implement bedstatus CPU usage for FreeBSD
+2026-07-28,15:37,15:56,implement themeswitch
+2026-07-28,16:35,16:38,implement themeswitch
