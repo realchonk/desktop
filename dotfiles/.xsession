@@ -25,12 +25,16 @@ fi
 
 bedstatus &
 xbgcd &
-xidle -delay 900 -timeout 900 -program /usr/local/bin/slock &
+bidle -t 900 &
 dunst &
 
 pkill xconsole
 
-if command -v dbus-launch >/dev/null 2>&1; then
+_has_command() {
+	command -v "$1" >/dev/null 2>&1
+}
+
+if _has_command dbus-launch; then
 	_dbus_env_file="/tmp/dbus-$(id -u)-env"
 	if [ ! -e "${_dbus_env_file}" ]; then
 		dbus-launch > "${_dbus_env_file}"
@@ -40,6 +44,16 @@ fi
 
 if [ -e "$HOME/.xsession.local" ]; then
 	. "$HOME/.xsession.local"
+fi
+
+for prog in firefox thunderbird lxsession; do
+	_has_command "$prog" && "$prog" &
+done
+
+if _has_command signal-desktop; then
+	signal-desktop &
+else _has_command gurk; then
+	gurkx &
 fi
 
 exec dwm -l "$HOME/.local/share/dwm.log"
