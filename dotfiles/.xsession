@@ -52,7 +52,7 @@ done
 
 if _has_command signal-desktop; then
 	signal-desktop &
-else _has_command gurk; then
+elif _has_command gurk; then
 	gurkx &
 fi
 
