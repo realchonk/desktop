@@ -1,12 +1,12 @@
-PROGS =	bidle			\
+PROGS =	audioctl		\
+	bidle			\
 	flash			\
+	gurkx			\
 	pinentry-dmenu2		\
 	slowcat			\
-	gurkx			\
-	xxed			\
-	wt
-
-SCRIPTS = audioctl themeswitch
+	themeswitch		\
+	wt			\
+	xxed
 
 MANS =	audioctl.1 bidle.1 flash.1 slowcat.1 wt.1 xxed.1
 
@@ -18,9 +18,9 @@ clean:
 	rm -f ${PROGS:F}
 
 ## Install ${PROGS:J, } and kbd-rus.png into ${DESTDIR}${PREFIX}
-install: ${PROGS} ${SCRIPTS} ${MANS}
+install: ${PROGS} ${MANS}
 	mkdir -p ${DESTDIR}${BINPREFIX} ${DESTDIR}${DATADIR} ${DESTDIR}${MANPREFIX}/man1
-	cp -f ${PROGS:F} ${SCRIPTS:F} ${DESTDIR}${BINPREFIX}/
+	cp -f ${PROGS:F} ${DESTDIR}${BINPREFIX}/
 	cp -f kbd-ru.png ${DESTDIR}${DATADIR}/
 	cp -f ${MANS} ${DESTDIR}${MANPREFIX}/man1/
 
