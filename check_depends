@@ -40,7 +40,7 @@ zathura
 '
 
 depends_Linux='bluetui? mount.nfs oksh rustup? wpctl'
-depends_OpenBSD=''
+depends_OpenBSD='colorls?'
 depends_FreeBSD='oksh'
 
 depends_os=$(eval echo "\"\${depends_$(uname)}\"")
