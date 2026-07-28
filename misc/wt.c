@@ -19,6 +19,7 @@
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
+#include <limits.h>
 #include <signal.h>
 #include <time.h>
 #include <unistd.h>
@@ -27,6 +28,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
 
 #define WT_DIR     "Documents/wt"
 #define DATE_LEN   11
@@ -205,14 +210,56 @@ write_csv_field(FILE *f, const char *s)
 	fputc('"', f);
 }
 
+static char *
+write_target(const char *path)
+{
+	char *cur = xstrdup(path);
+	int depth = 0;
+
+	for (;;) {
+		struct stat st;
+		char linkbuf[PATH_MAX];
+		ssize_t n;
+		char *slash, *next;
+
+		if (depth++ > 16)
+			return cur;
+		if (lstat(cur, &st) != 0 || !S_ISLNK(st.st_mode))
+			return cur;
+
+		n = readlink(cur, linkbuf, sizeof(linkbuf) - 1);
+		if (n < 0)
+			return cur;
+		linkbuf[n] = '\0';
+
+		if (linkbuf[0] == '/') {
+			next = xstrdup(linkbuf);
+		} else {
+			slash = strrchr(cur, '/');
+			if (slash != NULL) {
+				size_t dl = (size_t)(slash - cur);
+				next = xmalloc(dl + 1 + (size_t)n + 1);
+				snprintf(next, dl + 1 + (size_t)n + 1,
+				    "%.*s/%s", (int)dl, cur, linkbuf);
+			} else {
+				next = xmalloc(2 + (size_t)n + 1);
+				snprintf(next, 2 + (size_t)n + 1, "./%s", linkbuf);
+			}
+		}
+		free(cur);
+		cur = next;
+	}
+}
+
 static void
 write_csv(struct ctx *ctx)
 {
-	size_t plen = strlen(ctx->path);
+	char *target = write_target(ctx->path);
+	size_t plen = strlen(target);
 	char *tmp = xmalloc(plen + 9);
 	FILE *f;
 
-	snprintf(tmp, plen + 9, "%s.wt.tmp", ctx->path);
+	snprintf(tmp, plen + 9, "%s.wt.tmp", target);
 
 	f = fopen(tmp, "w");
 	if (!f) err(1, "fopen('%s')", tmp);
@@ -229,9 +276,10 @@ write_csv(struct ctx *ctx)
 	if (fflush(f) != 0) err(1, "fflush('%s')", tmp);
 	if (fsync(fileno(f)) != 0) warn("fsync('%s')", tmp);
 	if (fclose(f) != 0) err(1, "fclose('%s')", tmp);
-	if (rename(tmp, ctx->path) != 0)
-		err(1, "rename('%s', '%s')", tmp, ctx->path);
+	if (rename(tmp, target) != 0)
+		err(1, "rename('%s', '%s')", tmp, target);
 	free(tmp);
+	free(target);
 }
 
 static void
