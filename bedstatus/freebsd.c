@@ -37,16 +37,34 @@ static bool mem_usage (uint64_t *usage)
 
 static bool cpu_usage (int *usage)
 {
-	int len;
+	size_t len;
+	long sum = 0;
 
 	if (old == NULL)
 		return false;
 
-	// TODO
-	(void)len;
-	(void)usage;
+	len = sizeof (struct cpu_times) * ncpu;
+	if (sysctlbyname ("kern.cp_times", new, &len, NULL, 0) < 0)
+		return false;
 
-	return false;
+	for (int i = 0; i < ncpu; ++i) {
+		long total = 0;
+
+		for (int j = 0; j < CPUSTATES; ++j) {
+			diff[i].times[j] = new[i].times[j] - old[i].times[j];
+			total += diff[i].times[j];
+		}
+
+		if (total == 0)
+			total = 1;
+
+		sum += 100 * (total - diff[i].times[CP_IDLE]) / total;
+	}
+
+	memcpy (old, new, len);
+
+	*usage = sum / ncpu;
+	return true;
 }
 
 static bool bat_perc (int *perc)
