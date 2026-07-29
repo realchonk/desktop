@@ -1,6 +1,6 @@
 include config.mk
 
-.SUBDIRS: bedstatus dmenu dwm misc netris scripts slock st xbgcd
+.SUBDIRS: bedstatus dmenu dwm misc netris raftfs scripts slock st xbgcd
 
 VERSION = "benni-0.8"
 

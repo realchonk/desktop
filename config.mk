@@ -37,7 +37,7 @@ CC ?= cc
 CPPFLAGS += -D_BSD_SOURCE -D__BSD_VISIBLE -D_XOPEN_SOURCE=700 -DPREFIX=\"${PREFIX}\" -DVERSION=\"${VERSION}\" -DTERM=\"${TERM}\"  -DXINERAMA
 
 ## C compiler flags
-CFLAGS += -std=c2x -pedantic -Wall -Wextra -Wno-sign-compare -O2 ${CPPFLAGS}
+CFLAGS += -pipe -std=c2x -pedantic -Wall -Wextra -Wno-sign-compare ${CPPFLAGS}
 
 ## Linker Flags
 LDFLAGS +=
@@ -47,6 +47,9 @@ CARGO ?= cargo
 
 ## Rust compiler flags
 RUSTFLAGS +=
+
+## Extra flags passed to `cargo build` for Rust components (e.g. --no-default-features --features block-leader-local)
+CARGO_BUILD_FLAGS ?=
 
 # Other settings
 
@@ -62,9 +65,18 @@ FONT_SIZE_TOPBAR ?= 6
 ## Default font size for the terminal
 FONT_SIZE_TERM ?= 8
 
+.if defined(DEBUG)
+CFLAGS += -g -O0
+RUST_PROFILE = debug
+.else
+CFLAGS += -O2
+CARGO_BUILD_FLAGS += --release
+RUST_PROFILE = release
+.endif
 
 -include config.mk.local
 
 .EXPORTS: PREFIX CONFDIR BINPREFIX MANPREFIX SCRIPTSDIR GAMESDIR DATADIR USERCONFDIR
-.EXPORTS: CC CPPFLAGS CFLAGS LDFLAGS CARGO RUSTFLAGS
+.EXPORTS: CC CPPFLAGS CFLAGS LDFLAGS CARGO RUSTFLAGS CARGO_BUILD_FLAGS
 .EXPORTS: TERM FONT FONT_SIZE_TOPBAR FONT_SIZE_TERM
+.EXPORTS: RUST_PROFILE

@@ -77,10 +77,11 @@ install: install-extra
 ## Rust Program Template
 .template rust
 
-SRC != find src -name '*.rs'
+.SUBDIRS: src
+
+SRC != find src -name '*.rs' -type f -printf '%p '
 
 .DEFAULT: all
-.SUBDIRS: src
 
 . if !target(all)
 ## Build ${NAME}
@@ -92,8 +93,8 @@ all: all-extra
 . endif
 
 ${NAME}: ${SRC} Cargo.toml
-	RUSTFLAGS="${RUSTFLAGS}" ${CARGO} build --release --target-dir ${.OBJDIR}/target
-	cp -f ${.OBJDIR}/target/release/${NAME} $@
+	RUSTFLAGS="${RUSTFLAGS}" ${CARGO} build ${CARGO_BUILD_FLAGS} --target-dir ${.OBJDIR}/target
+	cp -f ${.OBJDIR}/target/${RUST_PROFILE}/${NAME} $@
 
 . if !target(clean)
 ## Clean ${NAME}'s build artifacts
