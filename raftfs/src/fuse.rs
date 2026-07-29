@@ -23,7 +23,7 @@ use crate::net;
 use crate::raft::{Raft as RaftHandle, RaftEntryData};
 
 const TTL: Duration = Duration::from_secs(1);
-const ENC_MARKER: &[u8] = b".raftfs.enc";
+const ENC_MARKER: &[u8] = b".raft-encryptdir";
 const VIRT_BIT: u64 = 1u64 << 62;
 
 fn is_virt(ino: u64) -> bool { ino & VIRT_BIT != 0 }
@@ -97,9 +97,14 @@ impl Frontend {
 
 	// ---- per-directory encryption helpers ----
 
-	/// Does this directory contain the `.raftfs.enc` marker?
+	/// Does this directory contain the encryption marker?
 	fn dir_has_marker(&self, dir_ino: u64) -> bool {
 		self.fsm.lock().unwrap().lookup(dir_ino, ENC_MARKER).is_some()
+	}
+
+	/// Is this directory a direct child of root?
+	fn is_top_level(&self, dir_ino: u64) -> bool {
+		self.fsm.lock().unwrap().parent_of(dir_ino) == Some(1)
 	}
 
 	/// Effective encryption key for a file: walk the parent chain looking for an
@@ -401,10 +406,10 @@ impl Filesystem for Frontend {
 		}
 		// Plain or Unlocked.
 		if nb == ENC_MARKER {
+			if !has_marker && self.is_top_level(parent.0) {
+				return reply.entry(&TTL, &virt_fileattr(virt_ino(parent.0)), Generation(0));
+			}
 			return reply.error(Errno::ENOENT);
-		}
-		if !has_marker && nb == b"lock" {
-			return reply.entry(&TTL, &virt_fileattr(virt_ino(parent.0)), Generation(0));
 		}
 		let found = {
 			let g = self.fsm.lock().unwrap();
@@ -458,10 +463,10 @@ impl Filesystem for Frontend {
 				break;
 			}
 		}
-		if !has_marker {
+		if !has_marker && self.is_top_level(ino.0) {
 			idx += 1;
 			if idx > offset {
-				let _ = reply.add(INodeNo(virt_ino(ino.0)), idx, FileType::RegularFile, "lock");
+				let _ = reply.add(INodeNo(virt_ino(ino.0)), idx, FileType::RegularFile, OsStr::from_bytes(ENC_MARKER));
 			}
 		}
 		reply.ok();
@@ -541,8 +546,8 @@ impl Filesystem for Frontend {
 		if has_marker && !unlocked {
 			return reply.error(Errno::EACCES);
 		}
-		// Plain dir: "lock" is a virtual file.
-		if !has_marker && nb == b"lock" {
+		// Plain top-level dir: ENC_MARKER is the virtual encrypt file.
+		if !has_marker && self.is_top_level(parent.0) && nb == ENC_MARKER {
 			return reply.created(&TTL, &virt_fileattr(virt_ino(parent.0)), Generation(0), FileHandle(0), FopenFlags::empty());
 		}
 		// Never allow creating the marker directly.
