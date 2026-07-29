@@ -336,6 +336,23 @@ fill_time(char *buf, size_t n, time_t t)
 	strftime(buf, n, "%H:%M", &tm);
 }
 
+static time_t
+date_to_time(const char *s)
+{
+	struct tm tm;
+	int y, m, d;
+
+	if (sscanf(s, "%d-%d-%d", &y, &m, &d) != 3)
+		return (time_t)-1;
+	memset(&tm, 0, sizeof(tm));
+	tm.tm_year = y - 1900;
+	tm.tm_mon = m - 1;
+	tm.tm_mday = d;
+	tm.tm_hour = 12;
+	tm.tm_isdst = -1;
+	return mktime(&tm);
+}
+
 static void
 elapsed_str(long sec, char *buf, size_t n)
 {
@@ -349,25 +366,60 @@ elapsed_str(long sec, char *buf, size_t n)
 	snprintf(buf, n, "%02d:%02d:%02d", h, m, s);
 }
 
-static void
-duration_str(const char *start, const char *end, char *buf, size_t n)
+static int
+hm_to_minutes(const char *s)
 {
-	int sh, sm, eh, em, mins, h, m;
+	int h, m;
+	if (sscanf(s, "%d:%d", &h, &m) != 2)
+		return -1;
+	return h * 60 + m;
+}
 
-	if (!end[0] ||
-	    sscanf(start, "%d:%d", &sh, &sm) != 2 ||
-	    sscanf(end, "%d:%d", &eh, &em) != 2) {
-		snprintf(buf, n, "?");
-		return;
-	}
-	mins = (eh * 60 + em) - (sh * 60 + sm);
-	if (mins < 0) mins += 24 * 60;
+static int
+row_minutes(const struct row *r)
+{
+	int smin, emin, mins;
+
+	if (!r->end[0])
+		return 0;
+	smin = hm_to_minutes(r->start);
+	emin = hm_to_minutes(r->end);
+	if (smin < 0 || emin < 0)
+		return 0;
+	mins = emin - smin;
+	if (mins < 0)
+		mins += 24 * 60;
+	return mins;
+}
+
+static void
+mins_str(int mins, char *buf, size_t n)
+{
+	int h, m;
+
+	if (mins < 0) mins = 0;
 	h = mins / 60;
 	m = mins % 60;
 	if (h > 0)
 		snprintf(buf, n, "%dh%dm", h, m);
 	else
 		snprintf(buf, n, "%dm", m);
+}
+
+static void
+duration_str(const char *start, const char *end, char *buf, size_t n)
+{
+	int smin, emin, mins;
+
+	smin = hm_to_minutes(start);
+	emin = hm_to_minutes(end);
+	if (smin < 0 || emin < 0) {
+		snprintf(buf, n, "?");
+		return;
+	}
+	mins = emin - smin;
+	if (mins < 0) mins += 24 * 60;
+	mins_str(mins, buf, n);
 }
 
 static char **
@@ -751,6 +803,69 @@ confirm(const char *msg)
 	return c == 'y' || c == 'Y';
 }
 
+static void
+compute_summary(const struct ctx *ctx, int *today, int *week,
+    int *month, int *total)
+{
+	time_t now = time(NULL);
+	struct tm tmnow, tmb;
+	time_t today_ts, week_ts, month_ts;
+
+	*today = *week = *month = *total = 0;
+
+	localtime_r(&now, &tmnow);
+
+	tmb = tmnow;
+	tmb.tm_sec = tmb.tm_min = tmb.tm_hour = 0;
+	today_ts = mktime(&tmb);
+
+	tmb.tm_mday -= (tmnow.tm_wday + 6) % 7;
+	week_ts = mktime(&tmb);
+
+	tmb = tmnow;
+	tmb.tm_sec = tmb.tm_min = tmb.tm_hour = 0;
+	tmb.tm_mday = 1;
+	month_ts = mktime(&tmb);
+
+	for (size_t i = 0; i < ctx->nrows; ++i) {
+		const struct row *r = &ctx->rows[i];
+		time_t rts = date_to_time(r->date);
+		int mins = row_minutes(r);
+
+		*total += mins;
+		if (rts == (time_t)-1)
+			continue;
+		if (rts >= today_ts) *today += mins;
+		if (rts >= week_ts) *week += mins;
+		if (rts >= month_ts) *month += mins;
+	}
+
+	if (ctx->running) {
+		int live = (int)((now - ctx->start_ts) / 60);
+		if (live < 0) live = 0;
+		*today += live;
+		*week += live;
+		*month += live;
+		*total += live;
+	}
+}
+
+static void
+draw_summary(struct ctx *ctx, int y)
+{
+	int today, week, month, total;
+	char s_today[16], s_week[16], s_month[16], s_total[16];
+
+	compute_summary(ctx, &today, &week, &month, &total);
+	mins_str(today, s_today, sizeof(s_today));
+	mins_str(week, s_week, sizeof(s_week));
+	mins_str(month, s_month, sizeof(s_month));
+	mins_str(total, s_total, sizeof(s_total));
+	mvprintw(y, 0, "Today: %s   Week: %s   Month: %s   Total: %s",
+	    s_today, s_week, s_month, s_total);
+	clrtoeol();
+}
+
 static int
 show_sessions(struct ctx *ctx)
 {
@@ -767,7 +882,7 @@ show_sessions(struct ctx *ctx)
 		stop_session = 0;
 
 		getmaxyx(stdscr, rows, cols);
-		list_h = rows - 5;
+		list_h = rows - 6;
 		if (list_h < 1) list_h = 1;
 
 		if (sel < top) top = sel;
@@ -800,6 +915,8 @@ show_sessions(struct ctx *ctx)
 
 		if (ctx->nrows == 0)
 			mvprintw(3, 0, "(no sessions yet - press Space to start one)");
+
+		draw_summary(ctx, rows - 3);
 
 		mvprintw(rows - 2, 0, "[Space] New session  [Enter] reuse desc  [Up/Down] navigate  [e] edit  [d] delete");
 		mvprintw(rows - 1, 0, "[q] back");
@@ -874,6 +991,8 @@ draw_running(struct ctx *ctx, long elapsed)
 	mvprintw(rows / 3 + 4, 0, "Description: %s%s",
 	    r->desc ? r->desc : "",
 	    (r->desc && r->desc[0]) ? "" : " (empty - press 'e' to set)");
+
+	draw_summary(ctx, rows / 3 + 6);
 
 	mvprintw(rows - 3, 0, "[Space] stop  [e] edit description  [c] cancel");
 	mvprintw(rows - 2, 0, "[q] refused while running");

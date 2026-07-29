@@ -17,6 +17,21 @@ date,start_time,end_time,description
 - RFC 4180 quoting on descriptions containing `,`, `"`, `\n`, `\r`.
 - Descriptions are trimmed of whitespace (incl. newlines) on both `edit_description` and `load_csv`.
 
+## Time summary
+
+`compute_summary(ctx, &today, &week, &month, &total)` buckets every row's minutes by comparing `date_to_time(r->date)` (the date parsed at noon to dodge DST edges) against three midnight boundaries computed with `mktime`:
+
+- **Today** — start of the current day.
+- **Week** — Monday of the current week (`tm_wday` mapped to "days since Monday" via `(wday + 6) % 7`, i.e. weeks start on Monday).
+- **Month** — the 1st of the current month.
+- **Total** — all rows, no date filter.
+
+Each row's contribution is `row_minutes` (refactored out of `duration_str`; `hm_to_minutes` parses a `HH:MM` field). Rows whose date fails to parse still count toward **Total** but are skipped for the dated buckets.
+
+While a session is running (`ctx->running`), the live elapsed `(now - start_ts) / 60` is added to today/week/month/total so the running screen reflects the in-progress session — the open row's `end` is `'\0'` at draw time so it isn't double-counted once saved.
+
+`draw_summary(ctx, y)` formats the four buckets via `mins_str` (same `2h30m` / `5m` shape as the per-row duration) and renders `Today: …  Week: …  Month: …  Total: …`. It is drawn on `rows - 3` of the session list (which is why `list_h = rows - 6`) and at `rows / 3 + 6` on the running screen.
+
 ## Crash-safe writes
 
 `write_csv` always:

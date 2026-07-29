@@ -1,18 +1,8 @@
 # Import
-- surf
-- tabbed
-- nsxiv
-- xidle (or write replacement)
-- password management tool (without GnuPG)
+- password management tool (using age)
+- bmk (preferably rewrite in Rust)
 
-# Fix
-- dwm: XKeycodeToKeysum
+# Write
+- file synchronization service
+- invoice generation
 
-# Refactor
-- split common code into a library (drw.c)
-
-# Build system
-- replace make with bmk, and import bmk
-
-# Features
-- configure dunst
