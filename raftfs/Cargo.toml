@@ -1,0 +1,28 @@
+[package]
+name = "raftfs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1"
+bincode = "1"
+blake3 = "1"
+clap = { version = "4", features = ["derive"] }
+openraft = { version = "0.9", features = ["serde", "storage-v2"] }
+serde = { version = "1", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+fuser = { version = "0.18", optional = true }
+libc = { version = "0.2", optional = true }
+chacha20poly1305 = { version = "0.10", optional = true }
+argon2 = { version = "0.5", optional = true }
+hkdf = { version = "0.12", optional = true }
+sha2 = { version = "0.10", optional = true }
+rand = { version = "0.8", optional = true }
+
+[features]
+default = ["fs", "crypto", "block-quorum"]
+fs = ["dep:fuser", "dep:libc"]
+crypto = ["fs", "dep:chacha20poly1305", "dep:argon2", "dep:hkdf", "dep:sha2", "dep:rand"]
+block-quorum = []
+block-leader-local = []

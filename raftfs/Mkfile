@@ -1,0 +1,12 @@
+NAME = raftfs
+
+.if "${OS}" == "Linux"
+.expand rust
+.else
+all:
+	@echo "raftfs is Linux-only; skipping on ${OS}"
+clean:
+install:
+install-bin:
+	@echo "raftfs is Linux-only; skipping on ${OS}"
+.endif
