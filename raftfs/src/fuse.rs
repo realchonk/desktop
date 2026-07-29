@@ -542,8 +542,11 @@ impl Filesystem for Frontend {
 		let nb = name.as_bytes();
 		let has_marker = self.dir_has_marker(parent.0);
 		let unlocked = self.keys.lock().unwrap().contains_key(&parent.0);
-		// Locked dir: refuse all creates except "unlock" (handled as virtual, not create).
+		// Locked dir: refuse all creates except "unlock" (virtual file).
 		if has_marker && !unlocked {
+			if nb == b"unlock" {
+				return reply.created(&TTL, &virt_fileattr(virt_ino(parent.0)), Generation(0), FileHandle(0), FopenFlags::empty());
+			}
 			return reply.error(Errno::EACCES);
 		}
 		// Plain top-level dir: ENC_MARKER is the virtual encrypt file.
