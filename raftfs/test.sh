@@ -89,14 +89,15 @@ rm -rf "$D/mnt"; mkdir -p "$D/mnt"
 "$B" start "$D/node" --mount "$D/mnt" >"$D/log" 2>&1 &
 sleep 5
 if echo wrongpass > "$D/mnt/secret/unlock" 2>/dev/null; then
-	sleep 1
-	if cat "$D/mnt/secret/file.txt" >/dev/null 2>&1; then
-		ng "wrong passphrase unlocked the dir"
-	else
-		ok "wrong passphrase rejected"
-	fi
+	ng "wrong passphrase was accepted (write returned success)"
 else
-	ok "wrong passphrase returns error"
+	ok "wrong passphrase rejected"
+fi
+sleep 1
+if cat "$D/mnt/secret/file.txt" >/dev/null 2>&1; then
+	ng "file.txt visible after wrong passphrase"
+else
+	ok "file.txt still hidden after wrong passphrase"
 fi
 
 echo "=== .raft-encryptdir not in root ==="

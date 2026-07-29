@@ -151,8 +151,8 @@ impl Frontend {
 		let pass = pass.trim();
 		let marker_ino = self.fsm.lock().unwrap().lookup(dir_ino, ENC_MARKER).ok_or(Error::NoEntry)?;
 		let (data, _) = self.fsm.lock().unwrap().file_data(marker_ino).ok_or(Error::NoEntry)?;
-		let blob = match data {
-			FileData::Inline(b) => b,
+		let blob = match &data {
+			FileData::Inline(b) => b.clone(),
 			_ => return Err(Error::Io),
 		};
 		let wrapped: crate::crypto::WrappedKey = bincode::deserialize(&blob).map_err(|_| Error::Io)?;
