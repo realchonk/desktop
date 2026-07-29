@@ -1,12 +1,16 @@
 NAME = raftfs
 
+## Build raftfs as server-only
+RAFTFS_SERVER ?= 0
+
 .if "${OS}" == "Linux"
-.expand rust
+HAS_CLIENT = 1
 .else
-all:
-	@echo "raftfs is Linux-only; skipping on ${OS}"
-clean:
-install:
-install-bin:
-	@echo "raftfs is Linux-only; skipping on ${OS}"
+HAS_CLIENT = 0
 .endif
+
+.if "${HAS_CLIENT}" == "0" || "${RAFTFS_SERVER}" == "1"
+CARGO_BUILD_FLAGS += --no-default-features --features server
+.endif
+
+.expand rust
