@@ -603,8 +603,9 @@ impl Filesystem for Frontend {
 	}
 
 	fn unlink(&self, req: &Request, parent: INodeNo, name: &OsStr, reply: ReplyEmpty) {
+		let nb = name.as_bytes();
 		let ctx = Self::ctx_from(req);
-		let cmd = Cmd::Unlink { parent: parent.0, name: name.as_bytes().to_vec() };
+		let cmd = Cmd::Unlink { parent: parent.0, name: nb.to_vec() };
 		match self.raft_write(cmd, ctx) {
 			Ok(()) => reply.ok(),
 			Err(e) => reply.error(to_errno(e)),
@@ -612,8 +613,46 @@ impl Filesystem for Frontend {
 	}
 
 	fn rmdir(&self, req: &Request, parent: INodeNo, name: &OsStr, reply: ReplyEmpty) {
+		let nb = name.as_bytes();
+		let target = {
+			let g = self.fsm.lock().unwrap();
+			g.lookup(parent.0, nb).and_then(|i| g.attr(i))
+		};
+		if let Some(a) = target {
+			if a.kind == Kind::Directory {
+				let has_marker = self.dir_has_marker(a.ino);
+				let unlocked = self.keys.lock().unwrap().contains_key(&a.ino);
+				if has_marker && unlocked {
+					// Re-lock: drop the key from memory.
+					self.keys.lock().unwrap().remove(&a.ino);
+					return reply.ok();
+				}
+				if has_marker && !unlocked {
+					// Locked: permanently delete everything inside, then the dir.
+					let children: Vec<Vec<u8>> = {
+						let g = self.fsm.lock().unwrap();
+						g.read_dir(a.ino).map(|(_, entries)| entries.into_iter().map(|(n, _, _)| n).collect()).unwrap_or_default()
+					};
+					for child in &children {
+						let ctx = Ctx { now: SystemTime::now(), uid: req.uid(), gid: req.gid() };
+						match self.raft_write(Cmd::Unlink { parent: a.ino, name: child.clone() }, ctx) {
+							Ok(()) => {}
+							Err(e) => return reply.error(to_errno(e)),
+						}
+					}
+					let ctx = Ctx { now: SystemTime::now(), uid: req.uid(), gid: req.gid() };
+					match self.raft_write(Cmd::Rmdir { parent: parent.0, name: nb.to_vec() }, ctx) {
+						Ok(()) => {
+							self.keys.lock().unwrap().remove(&a.ino);
+							return reply.ok();
+						}
+						Err(e) => return reply.error(to_errno(e)),
+					}
+				}
+			}
+		}
 		let ctx = Self::ctx_from(req);
-		let cmd = Cmd::Rmdir { parent: parent.0, name: name.as_bytes().to_vec() };
+		let cmd = Cmd::Rmdir { parent: parent.0, name: nb.to_vec() };
 		match self.raft_write(cmd, ctx) {
 			Ok(()) => reply.ok(),
 			Err(e) => reply.error(to_errno(e)),
