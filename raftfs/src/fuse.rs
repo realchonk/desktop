@@ -414,7 +414,7 @@ impl Filesystem for Frontend {
 		if locked {
 			idx += 1;
 			if idx > offset {
-				reply.add(INodeNo(virt_ino(ino.0)), idx, FileType::RegularFile, "unlock");
+				let _ = reply.add(INodeNo(virt_ino(ino.0)), idx, FileType::RegularFile, "unlock");
 			}
 			return reply.ok();
 		}
@@ -438,7 +438,7 @@ impl Filesystem for Frontend {
 		if !has_marker {
 			idx += 1;
 			if idx > offset {
-				reply.add(INodeNo(virt_ino(ino.0)), idx, FileType::RegularFile, "lock");
+				let _ = reply.add(INodeNo(virt_ino(ino.0)), idx, FileType::RegularFile, "lock");
 			}
 		}
 		reply.ok();

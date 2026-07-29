@@ -70,7 +70,7 @@ fn tr(s: &str) {
 impl SmStore {
 	pub fn new(fsm: Arc<Mutex<Fsm>>, dir: &Path) -> Self {
 		let snapshot_path = dir.join("snapshot.bin");
-		let mut current = Mutex::new(None);
+		let current = Mutex::new(None);
 		if let Ok(bytes) = std::fs::read(&snapshot_path) {
 			if !bytes.is_empty() {
 				if let Ok(data) = bincode::deserialize::<SmSnapData>(&bytes) {
@@ -98,6 +98,7 @@ impl SmStore {
 		}
 	}
 
+	#[allow(dead_code)]
 	pub fn fsm_handle(&self) -> Arc<Mutex<Fsm>> {
 		self.fsm.clone()
 	}

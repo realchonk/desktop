@@ -1,14 +1,11 @@
-use std::collections::HashMap;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
 
 use crate::model::Hash;
 
 pub trait BlockStore: Send + Sync {
 	fn put(&self, data: &[u8]) -> Hash;
 	fn get(&self, hash: Hash) -> Option<Vec<u8>>;
-	fn has(&self, hash: Hash) -> bool;
 }
 
 pub fn hash_of(data: &[u8]) -> Hash {
@@ -24,31 +21,6 @@ fn hex_encode(bytes: &[u8]) -> String {
 		s.push(HEX[(b & 0x0f) as usize] as char);
 	}
 	s
-}
-
-pub struct MemStore(Mutex<HashMap<Hash, Vec<u8>>>);
-
-impl MemStore {
-	pub fn new() -> Self {
-		Self(Mutex::new(HashMap::new()))
-	}
-}
-
-impl BlockStore for MemStore {
-	fn put(&self, data: &[u8]) -> Hash {
-		let h = hash_of(data);
-		let mut g = self.0.lock().unwrap();
-		g.entry(h).or_insert_with(|| data.to_vec());
-		h
-	}
-
-	fn get(&self, hash: Hash) -> Option<Vec<u8>> {
-		self.0.lock().unwrap().get(&hash).cloned()
-	}
-
-	fn has(&self, hash: Hash) -> bool {
-		self.0.lock().unwrap().contains_key(&hash)
-	}
 }
 
 /// Content-addressed on-disk block store: `root/<b0><b1>/<b2><b3>/<hex>`.
@@ -99,9 +71,4 @@ impl BlockStore for DiskStore {
 	fn get(&self, hash: Hash) -> Option<Vec<u8>> {
 		std::fs::read(self.path_for(hash)).ok()
 	}
-
-	fn has(&self, hash: Hash) -> bool {
-		self.path_for(hash).exists()
-	}
 }
-

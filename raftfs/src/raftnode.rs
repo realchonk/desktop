@@ -104,7 +104,7 @@ pub async fn setup(cfg: &NodeConfig) -> Result<(RaftHandle, Arc<Mutex<Fsm>>, Arc
 }
 
 pub async fn metrics_loop(raft: RaftHandle, id: crate::raft::NodeId) -> Result<()> {
-	let mut rx = raft.metrics();
+	let rx = raft.metrics();
 	loop {
 		tokio::select! {
 			_ = tokio::signal::ctrl_c() => {

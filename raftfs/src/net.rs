@@ -8,7 +8,7 @@ use openraft::raft::{
 	AppendEntriesRequest, AppendEntriesResponse, InstallSnapshotRequest, InstallSnapshotResponse,
 	VoteRequest, VoteResponse,
 };
-use openraft::{BasicNode, ChangeMembers, Raft};
+use openraft::{BasicNode, ChangeMembers};
 use std::collections::BTreeSet;
 
 use crate::block::{BlockStore, DiskStore};
@@ -218,6 +218,7 @@ pub async fn block_get(addr: &str, hash: Hash) -> std::io::Result<Option<Vec<u8>
 }
 
 /// Forward a command to the leader (used by a non-leader FUSE mount).
+#[allow(dead_code)]
 pub async fn forward_cmd(addr: &str, entry: RaftEntryData) -> std::io::Result<RaftResp> {
 	let mut s = TcpStream::connect(addr).await?;
 	let req = bincode::serialize(&Wire::Forward(entry)).map_err(ioerr)?;

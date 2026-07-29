@@ -3,7 +3,6 @@ use std::fmt;
 use std::str::FromStr;
 
 use openraft::{BasicNode, Entry, TokioRuntime};
-use openraft::declare_raft_types;
 use serde::{Deserialize, Serialize};
 
 use crate::cmd::Cmd;
