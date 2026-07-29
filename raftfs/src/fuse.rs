@@ -137,8 +137,11 @@ impl Frontend {
 		// Create the marker file via Raft.
 		let ctx = Ctx { now: SystemTime::now(), uid: 0, gid: 0 };
 		self.raft_write(Cmd::Create { parent: dir_ino, name: ENC_MARKER.to_vec(), perm: 0o600 }, ctx.clone())?;
-		// Find the marker's ino and write the wrapped key into it.
-		let marker_ino = self.fsm.lock().unwrap().lookup(dir_ino, ENC_MARKER).ok_or(Error::Io)?;
+		// Wait for the marker to replicate to the local FSM (follower may lag).
+		let marker_ino = match self.wait_lookup(dir_ino, ENC_MARKER) {
+			Some(attr) => attr.ino,
+			None => return Err(Error::Io),
+		};
 		self.raft_write(Cmd::WriteInline { ino: marker_ino, offset: 0, data: blob }, ctx)?;
 		// Store the key so the dir is immediately unlocked.
 		self.keys.lock().unwrap().insert(dir_ino, key);
