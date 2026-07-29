@@ -27,15 +27,15 @@ a reachable TCP port.
 On **server A** (replace `A_IP` and `B_IP` with real addresses):
 
 ```
-raftfs format /data/raftfs --id 1 --addr A_IP:7000 \
-    --bootstrap "1=A_IP:7000,2=B_IP:7000"
+raftfs format /data/raftfs --id serverA --addr A_IP:7000 \
+    --bootstrap "serverA=A_IP:7000,serverB=B_IP:7000"
 ```
 
 On **server B**:
 
 ```
-raftfs format /data/raftfs --id 2 --addr B_IP:7000 \
-    --bootstrap "1=A_IP:7000,2=B_IP:7000"
+raftfs format /data/raftfs --id serverB --addr B_IP:7000 \
+    --bootstrap "serverA=A_IP:7000,serverB=B_IP:7000"
 ```
 
 ### 2. Start both nodes
@@ -65,7 +65,7 @@ can serve reads, but doesn't count toward the write quorum.
 On **server C**:
 
 ```
-raftfs format /data/raftfs --id 3 --addr C_IP:7000
+raftfs format /data/raftfs --id serverC --addr C_IP:7000
 raftfs start /data/raftfs --mount /mnt/raftfs &
 raftfs join /data/raftfs --leader A_IP:7000     # add as learner
 ```
@@ -73,7 +73,7 @@ raftfs join /data/raftfs --leader A_IP:7000     # add as learner
 When ready to make it a voter:
 
 ```
-raftfs promote --leader A_IP:7000 --id 3        # learner → voter
+raftfs promote --leader A_IP:7000 --id serverC  # learner → voter
 ```
 
 After promotion the cluster has 3 voters (quorum 2; tolerates 1 down).

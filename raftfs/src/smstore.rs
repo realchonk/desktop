@@ -12,18 +12,18 @@ use serde::{Deserialize, Serialize};
 use crate::fsm::{Fsm, FsmSnapshot};
 use crate::raft::{RaftEntryData, RaftResp, TypeConfig};
 
-type SResult<T> = Result<T, StorageError<u64>>;
+type SResult<T> = Result<T, StorageError<crate::raft::NodeId>>;
 
 #[derive(Default, Clone)]
 struct SmMeta {
-	last_applied: Option<LogId<u64>>,
-	last_membership: StoredMembership<u64, BasicNode>,
+	last_applied: Option<LogId<crate::raft::NodeId>>,
+	last_membership: StoredMembership<crate::raft::NodeId, BasicNode>,
 }
 
 #[derive(Serialize, Deserialize)]
 struct SmSnapData {
-	last_applied: Option<LogId<u64>>,
-	last_membership: StoredMembership<u64, BasicNode>,
+	last_applied: Option<LogId<crate::raft::NodeId>>,
+	last_membership: StoredMembership<crate::raft::NodeId, BasicNode>,
 	fsm: FsmSnapshot,
 }
 
@@ -34,7 +34,7 @@ pub struct SmStore {
 	current: Mutex<Option<Snapshot<TypeConfig>>>,
 }
 
-fn berr(e: bincode::Error, write: bool) -> StorageError<u64> {
+fn berr(e: bincode::Error, write: bool) -> StorageError<crate::raft::NodeId> {
 	StorageError::IO {
 		source: StorageIOError::new(
 			ErrorSubject::Store,
@@ -44,7 +44,7 @@ fn berr(e: bincode::Error, write: bool) -> StorageError<u64> {
 	}
 }
 
-fn ierr(e: std::io::Error, write: bool) -> StorageError<u64> {
+fn ierr(e: std::io::Error, write: bool) -> StorageError<crate::raft::NodeId> {
 	StorageError::IO {
 		source: StorageIOError::new(
 			ErrorSubject::Store,
@@ -103,7 +103,7 @@ impl SmStore {
 	}
 }
 
-fn snap_id(last: &Option<LogId<u64>>, idx: u64) -> String {
+fn snap_id(last: &Option<LogId<crate::raft::NodeId>>, idx: u64) -> String {
 	match last {
 		Some(l) => format!("{}-{}-{}", l.leader_id, l.index, idx),
 		None => format!("--{}", idx),
@@ -145,7 +145,7 @@ impl RaftStateMachine<TypeConfig> for SmStore {
 
 	async fn applied_state(
 		&mut self,
-	) -> SResult<(Option<LogId<u64>>, StoredMembership<u64, BasicNode>)> {
+	) -> SResult<(Option<LogId<crate::raft::NodeId>>, StoredMembership<crate::raft::NodeId, BasicNode>)> {
 		let m = self.meta.lock().unwrap();
 		Ok((m.last_applied, m.last_membership.clone()))
 	}
@@ -203,7 +203,7 @@ impl RaftStateMachine<TypeConfig> for SmStore {
 
 	async fn install_snapshot(
 		&mut self,
-		meta: &openraft::SnapshotMeta<u64, BasicNode>,
+		meta: &openraft::SnapshotMeta<crate::raft::NodeId, BasicNode>,
 		snapshot: Box<Cursor<Vec<u8>>>,
 	) -> SResult<()> {
 		let bytes = snapshot.into_inner();

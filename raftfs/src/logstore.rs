@@ -9,14 +9,14 @@ use openraft::{Entry, ErrorSubject, ErrorVerb, LogId, OptionalSend, StorageError
 
 use crate::raft::TypeConfig;
 
-type SResult<T> = Result<T, StorageError<u64>>;
+type SResult<T> = Result<T, StorageError<crate::raft::NodeId>>;
 
 #[derive(Default, serde::Serialize, serde::Deserialize, Clone)]
 struct Inner {
 	entries: BTreeMap<u64, Entry<TypeConfig>>,
-	last_purged: Option<LogId<u64>>,
-	vote: Option<Vote<u64>>,
-	committed: Option<LogId<u64>>,
+	last_purged: Option<LogId<crate::raft::NodeId>>,
+	vote: Option<Vote<crate::raft::NodeId>>,
+	committed: Option<LogId<crate::raft::NodeId>>,
 }
 
 #[derive(Clone)]
@@ -25,7 +25,7 @@ pub struct LogStore {
 	inner: Arc<Mutex<Inner>>,
 }
 
-fn serr(e: impl std::error::Error + 'static, write: bool) -> StorageError<u64> {
+fn serr(e: impl std::error::Error + 'static, write: bool) -> StorageError<crate::raft::NodeId> {
 	StorageError::IO {
 		source: StorageIOError::new(
 			ErrorSubject::Store,
@@ -35,7 +35,7 @@ fn serr(e: impl std::error::Error + 'static, write: bool) -> StorageError<u64> {
 	}
 }
 
-fn berr(e: bincode::Error, write: bool) -> StorageError<u64> {
+fn berr(e: bincode::Error, write: bool) -> StorageError<crate::raft::NodeId> {
 	StorageError::IO {
 		source: StorageIOError::new(
 			ErrorSubject::Store,
@@ -120,7 +120,7 @@ impl RaftLogStorage<TypeConfig> for LogStore {
 		self.clone()
 	}
 
-	async fn save_vote(&mut self, vote: &Vote<u64>) -> SResult<()> {
+	async fn save_vote(&mut self, vote: &Vote<crate::raft::NodeId>) -> SResult<()> {
 		{
 			let mut g = self.inner.lock().unwrap();
 			g.vote = Some(*vote);
@@ -128,11 +128,11 @@ impl RaftLogStorage<TypeConfig> for LogStore {
 		self.persist()
 	}
 
-	async fn read_vote(&mut self) -> SResult<Option<Vote<u64>>> {
+	async fn read_vote(&mut self) -> SResult<Option<Vote<crate::raft::NodeId>>> {
 		Ok(self.inner.lock().unwrap().vote)
 	}
 
-	async fn save_committed(&mut self, committed: Option<LogId<u64>>) -> SResult<()> {
+	async fn save_committed(&mut self, committed: Option<LogId<crate::raft::NodeId>>) -> SResult<()> {
 		{
 			let mut g = self.inner.lock().unwrap();
 			g.committed = committed;
@@ -140,7 +140,7 @@ impl RaftLogStorage<TypeConfig> for LogStore {
 		self.persist()
 	}
 
-	async fn read_committed(&mut self) -> SResult<Option<LogId<u64>>> {
+	async fn read_committed(&mut self) -> SResult<Option<LogId<crate::raft::NodeId>>> {
 		Ok(self.inner.lock().unwrap().committed)
 	}
 
@@ -166,7 +166,7 @@ impl RaftLogStorage<TypeConfig> for LogStore {
 		}
 	}
 
-	async fn truncate(&mut self, log_id: LogId<u64>) -> SResult<()> {
+	async fn truncate(&mut self, log_id: LogId<crate::raft::NodeId>) -> SResult<()> {
 		{
 			let mut g = self.inner.lock().unwrap();
 			let keys: Vec<u64> = g.entries.range(log_id.index..).map(|(k, _)| *k).collect();
@@ -177,7 +177,7 @@ impl RaftLogStorage<TypeConfig> for LogStore {
 		self.persist()
 	}
 
-	async fn purge(&mut self, log_id: LogId<u64>) -> SResult<()> {
+	async fn purge(&mut self, log_id: LogId<crate::raft::NodeId>) -> SResult<()> {
 		{
 			let mut g = self.inner.lock().unwrap();
 			let keys: Vec<u64> = g.entries.range(..=log_id.index).map(|(k, _)| *k).collect();

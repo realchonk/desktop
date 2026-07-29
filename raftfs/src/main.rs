@@ -33,7 +33,7 @@ enum Cmd {
 	Format {
 		datadir: PathBuf,
 		#[arg(long)]
-		id: u64,
+		id: crate::raft::NodeId,
 		#[arg(long)]
 		addr: String,
 		#[arg(long)]
@@ -56,7 +56,7 @@ enum Cmd {
 		#[arg(long)]
 		leader: String,
 		#[arg(long)]
-		id: u64,
+		id: crate::raft::NodeId,
 	},
 }
 
@@ -107,7 +107,7 @@ fn main() -> ExitCode {
 	}
 }
 
-fn format_cmd(datadir: &Path, id: u64, addr: &str, bootstrap: Option<&str>) -> anyhow::Result<()> {
+fn format_cmd(datadir: &Path, id: crate::raft::NodeId, addr: &str, bootstrap: Option<&str>) -> anyhow::Result<()> {
 	std::fs::create_dir_all(datadir)?;
 	std::fs::create_dir_all(datadir.join("raft"))?;
 	std::fs::create_dir_all(datadir.join("blocks"))?;
@@ -179,7 +179,7 @@ fn join_cmd(datadir: &Path, leader: &str) -> anyhow::Result<()> {
 	Ok(())
 }
 
-fn promote_cmd(leader: &str, id: u64) -> anyhow::Result<()> {
+fn promote_cmd(leader: &str, id: crate::raft::NodeId) -> anyhow::Result<()> {
 	let rt = tokio::runtime::Builder::new_multi_thread()
 		.enable_all()
 		.build()?;

@@ -49,12 +49,12 @@ pub struct Frontend {
 	raft: RaftHandle,
 	fsm: Arc<Mutex<Fsm>>,
 	disk: Arc<DiskStore>,
-	id: u64,
+	id: crate::raft::NodeId,
 	keys: Mutex<HashMap<u64, crate::crypto::DirKey>>,
 }
 
 impl Frontend {
-	pub fn new(rt: Handle, raft: RaftHandle, fsm: Arc<Mutex<Fsm>>, disk: Arc<DiskStore>, id: u64) -> Self {
+	pub fn new(rt: Handle, raft: RaftHandle, fsm: Arc<Mutex<Fsm>>, disk: Arc<DiskStore>, id: crate::raft::NodeId) -> Self {
 		Self { rt, raft, fsm, disk, id, keys: Mutex::new(HashMap::new()) }
 	}
 
@@ -153,7 +153,7 @@ impl Frontend {
 
 // ---- async helpers (take owned Arc clones so they are 'static + Send) ----
 
-async fn peer_addrs(raft: &RaftHandle, self_id: u64) -> Vec<String> {
+async fn peer_addrs(raft: &RaftHandle, self_id: crate::raft::NodeId) -> Vec<String> {
 	let m = raft.metrics().borrow().clone();
 	m.membership_config
 		.membership()
@@ -165,7 +165,7 @@ async fn peer_addrs(raft: &RaftHandle, self_id: u64) -> Vec<String> {
 
 async fn replicate_blocks(
 	raft: &RaftHandle,
-	id: u64,
+	id: crate::raft::NodeId,
 	blocks: &[(Hash, Vec<u8>)],
 ) -> Result<(), Error> {
 	let peers = peer_addrs(raft, id).await;
@@ -180,7 +180,7 @@ async fn replicate_blocks(
 	Ok(())
 }
 
-async fn lazy_fetch(disk: &DiskStore, raft: &RaftHandle, id: u64, hash: Hash) -> Option<Vec<u8>> {
+async fn lazy_fetch(disk: &DiskStore, raft: &RaftHandle, id: crate::raft::NodeId, hash: Hash) -> Option<Vec<u8>> {
 	for addr in peer_addrs(raft, id).await {
 		if let Ok(Some(b)) = net::block_get(&addr, hash).await {
 			disk.put(&b);
@@ -193,7 +193,7 @@ async fn lazy_fetch(disk: &DiskStore, raft: &RaftHandle, id: u64, hash: Hash) ->
 async fn materialize(
 	disk: &DiskStore,
 	raft: &RaftHandle,
-	id: u64,
+	id: crate::raft::NodeId,
 	ino: u64,
 	enc: Option<crate::crypto::DirKey>,
 	data: &FileData,
@@ -234,7 +234,7 @@ async fn do_write(
 	raft: RaftHandle,
 	fsm: Arc<Mutex<Fsm>>,
 	disk: Arc<DiskStore>,
-	id: u64,
+	id: crate::raft::NodeId,
 	ino: u64,
 	offset: u64,
 	data: Vec<u8>,
@@ -657,7 +657,7 @@ impl Filesystem for Frontend {
 	}
 }
 
-pub fn mount(mountpoint: &Path, rt: Handle, raft: RaftHandle, fsm: Arc<Mutex<Fsm>>, disk: Arc<DiskStore>, self_id: u64) -> std::io::Result<()> {
+pub fn mount(mountpoint: &Path, rt: Handle, raft: RaftHandle, fsm: Arc<Mutex<Fsm>>, disk: Arc<DiskStore>, self_id: crate::raft::NodeId) -> std::io::Result<()> {
 	let fs = Frontend::new(rt, raft, fsm, disk, self_id);
 	let mut config = fuser::Config::default();
 	config.mount_options = vec![];

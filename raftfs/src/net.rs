@@ -39,13 +39,13 @@ async fn read_frame<R: AsyncReadExt + Unpin>(r: &mut R) -> std::io::Result<Vec<u
 #[derive(Serialize, Deserialize)]
 enum Wire {
 	Append(AppendEntriesRequest<TypeConfig>),
-	Vote(VoteRequest<u64>),
+	Vote(VoteRequest<crate::raft::NodeId>),
 	Snap(InstallSnapshotRequest<TypeConfig>),
 	BlockGet(Hash),
 	BlockPut(Vec<u8>),
 	Forward(RaftEntryData),
-	Join { id: u64, addr: String },
-	Promote { id: u64 },
+	Join { id: crate::raft::NodeId, addr: String },
+	Promote { id: crate::raft::NodeId },
 }
 
 async fn rpc_raw(addr: &str, wire: &Wire) -> std::io::Result<Vec<u8>> {
@@ -60,7 +60,7 @@ pub struct NetFactory;
 impl RaftNetworkFactory<TypeConfig> for NetFactory {
 	type Network = NetClient;
 
-	async fn new_client(&mut self, _target: u64, node: &BasicNode) -> NetClient {
+	async fn new_client(&mut self, _target: crate::raft::NodeId, node: &BasicNode) -> NetClient {
 		NetClient {
 			addr: node.addr.clone(),
 		}
@@ -75,7 +75,7 @@ impl NetClient {
 	async fn call<R: serde::de::DeserializeOwned>(
 		&self,
 		wire: Wire,
-	) -> Result<R, RPCError<u64, BasicNode, RaftError<u64>>> {
+	) -> Result<R, RPCError<crate::raft::NodeId, BasicNode, RaftError<crate::raft::NodeId>>> {
 		let bytes = rpc_raw(&self.addr, &wire)
 			.await
 			.map_err(|e| RPCError::Unreachable(Unreachable::new(&e)))?;
@@ -89,15 +89,15 @@ impl RaftNetwork<TypeConfig> for NetClient {
 		&mut self,
 		rpc: AppendEntriesRequest<TypeConfig>,
 		_opt: RPCOption,
-	) -> Result<AppendEntriesResponse<u64>, RPCError<u64, BasicNode, RaftError<u64>>> {
+	) -> Result<AppendEntriesResponse<crate::raft::NodeId>, RPCError<crate::raft::NodeId, BasicNode, RaftError<crate::raft::NodeId>>> {
 		self.call(Wire::Append(rpc)).await
 	}
 
 	async fn vote(
 		&mut self,
-		rpc: VoteRequest<u64>,
+		rpc: VoteRequest<crate::raft::NodeId>,
 		_opt: RPCOption,
-	) -> Result<VoteResponse<u64>, RPCError<u64, BasicNode, RaftError<u64>>> {
+	) -> Result<VoteResponse<crate::raft::NodeId>, RPCError<crate::raft::NodeId, BasicNode, RaftError<crate::raft::NodeId>>> {
 		self.call(Wire::Vote(rpc)).await
 	}
 
@@ -106,13 +106,13 @@ impl RaftNetwork<TypeConfig> for NetClient {
 		rpc: InstallSnapshotRequest<TypeConfig>,
 		_opt: RPCOption,
 	) -> Result<
-		InstallSnapshotResponse<u64>,
-		RPCError<u64, BasicNode, RaftError<u64, InstallSnapshotError>>,
+		InstallSnapshotResponse<crate::raft::NodeId>,
+		RPCError<crate::raft::NodeId, BasicNode, RaftError<crate::raft::NodeId, InstallSnapshotError>>,
 	> {
 		let bytes = rpc_raw(&self.addr, &Wire::Snap(rpc))
 			.await
 			.map_err(|e| RPCError::Unreachable(Unreachable::new(&e)))?;
-		bincode::deserialize::<InstallSnapshotResponse<u64>>(&bytes)
+		bincode::deserialize::<InstallSnapshotResponse<crate::raft::NodeId>>(&bytes)
 			.map_err(|e| RPCError::Unreachable(Unreachable::new(&e)))
 	}
 }
@@ -204,7 +204,7 @@ pub async fn forward_cmd(addr: &str, entry: RaftEntryData) -> std::io::Result<Ra
 }
 
 /// Ask the leader at `addr` to add (id, addr) as a learner.
-pub async fn mgmt_join(addr: &str, id: u64, node_addr: String) -> std::io::Result<()> {
+pub async fn mgmt_join(addr: &str, id: crate::raft::NodeId, node_addr: String) -> std::io::Result<()> {
 	let mut s = TcpStream::connect(addr).await?;
 	let req = bincode::serialize(&Wire::Join { id, addr: node_addr }).map_err(ioerr)?;
 	write_frame(&mut s, &req).await?;
@@ -215,7 +215,7 @@ pub async fn mgmt_join(addr: &str, id: u64, node_addr: String) -> std::io::Resul
 }
 
 /// Ask the leader at `addr` to promote node `id` from learner to voter.
-pub async fn mgmt_promote(addr: &str, id: u64) -> std::io::Result<()> {
+pub async fn mgmt_promote(addr: &str, id: crate::raft::NodeId) -> std::io::Result<()> {
 	let mut s = TcpStream::connect(addr).await?;
 	let req = bincode::serialize(&Wire::Promote { id }).map_err(ioerr)?;
 	write_frame(&mut s, &req).await?;

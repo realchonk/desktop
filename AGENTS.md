@@ -90,13 +90,13 @@ Topology (per the design): servers = voters (quorum-2 → both servers must be u
 
 Run a cluster:
 ```
-raftfs format /data/n1 --id 1 --addr H:P --bootstrap "1=H1:P1,2=H2:P2"
-raftfs format /data/n2 --id 2 --addr H:P --bootstrap "1=H1:P1,2=H2:P2"
+raftfs format /data/n1 --id nodeA --addr H:P --bootstrap "nodeA=H1:P1,nodeB=H2:P2"
+raftfs format /data/n2 --id nodeB --addr H:P --bootstrap "nodeA=H1:P1,nodeB=H2:P2"
 raftfs start /data/n1 --mount /mnt/a &  raftfs start /data/n2 --mount /mnt/b &
 # add a node later:
-raftfs format /data/n3 --id 3 --addr H3:P3 && raftfs start /data/n3 &
+raftfs format /data/n3 --id nodeC --addr H3:P3 && raftfs start /data/n3 &
 raftfs join   /data/n3 --leader <leader-addr>   # learner, catches up + can read
-raftfs promote --leader <leader-addr> --id 3     # learner -> voter
+raftfs promote --leader <leader-addr> --id nodeC  # learner -> voter
 ```
 
 Layout: `model.rs` / `cmd.rs` / `fsm.rs` / `block.rs` / `logstore.rs` / `smstore.rs` / `net.rs` / `raftnode.rs` are core (always compiled — the server node shares them; only `fuser`/`libc` are `fs`-gated via `src/fuse.rs`).

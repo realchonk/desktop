@@ -16,12 +16,12 @@ use crate::smstore::SmStore;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct NodeConfig {
-	pub id: u64,
+	pub id: crate::raft::NodeId,
 	pub addr: String,
 	pub data_dir: PathBuf,
 	/// Initial voter set, only set on the bootstrap node(s).
-	pub bootstrap: Option<BTreeMap<u64, BasicNode>>,
-	pub preferred_leader: u64,
+	pub bootstrap: Option<BTreeMap<crate::raft::NodeId, BasicNode>>,
+	pub preferred_leader: crate::raft::NodeId,
 }
 
 impl NodeConfig {
@@ -39,7 +39,7 @@ impl NodeConfig {
 }
 
 /// Parse "id=addr,id=addr,..." into a member map.
-pub fn parse_members(spec: &str) -> Result<BTreeMap<u64, BasicNode>> {
+pub fn parse_members(spec: &str) -> Result<BTreeMap<crate::raft::NodeId, BasicNode>> {
 	let mut m = BTreeMap::new();
 	for part in spec.split(',') {
 		let part = part.trim();
@@ -49,7 +49,7 @@ pub fn parse_members(spec: &str) -> Result<BTreeMap<u64, BasicNode>> {
 		let (id_s, addr) = part
 			.split_once('=')
 			.ok_or_else(|| anyhow!("bootstrap entry `{part}` must be id=addr"))?;
-		let id: u64 = id_s.trim().parse()?;
+		let id = id_s.trim().parse()?;
 		m.insert(id, BasicNode { addr: addr.trim().to_string() });
 	}
 	Ok(m)
@@ -103,7 +103,7 @@ pub async fn setup(cfg: &NodeConfig) -> Result<(RaftHandle, Arc<Mutex<Fsm>>, Arc
 	Ok((raft, fsm, disk))
 }
 
-pub async fn metrics_loop(raft: RaftHandle, id: u64) -> Result<()> {
+pub async fn metrics_loop(raft: RaftHandle, id: crate::raft::NodeId) -> Result<()> {
 	let mut rx = raft.metrics();
 	loop {
 		tokio::select! {
