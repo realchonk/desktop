@@ -13,7 +13,7 @@ check:
 
 ## Check user configuration files
 check-user:
-	find dotfiles/ -not -type d -exec sh -c 'diff -u "$$HOME/$$(echo "{}" | sed 's@^dotfiles/@@')" {}' \;
+	find dotfiles/ -not -type d -exec sh -c 'diff -u "${USERCONFDIR}/$$(echo "{}" | sed 's@^dotfiles/@@')" {}' \;
 
 ## Install system configuration files into ${DESTDIR}${CONFDIR}
 install-etc:
