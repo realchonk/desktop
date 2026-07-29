@@ -62,6 +62,10 @@ enum Cmd {
 	Status {
 		datadir: PathBuf,
 	},
+	/// Trigger a leader election on this node (nudges it to become leader).
+	Elect {
+		datadir: PathBuf,
+	},
 }
 
 fn main() -> ExitCode {
@@ -112,6 +116,13 @@ fn main() -> ExitCode {
 			Ok(()) => ExitCode::SUCCESS,
 			Err(e) => {
 				eprintln!("raftfs: status: {e}");
+				ExitCode::FAILURE
+			}
+		},
+		Cmd::Elect { datadir } => match elect_cmd(&datadir) {
+			Ok(()) => ExitCode::SUCCESS,
+			Err(e) => {
+				eprintln!("raftfs: elect: {e}");
 				ExitCode::FAILURE
 			}
 		},
@@ -238,5 +249,54 @@ fn status_cmd(datadir: &Path) -> anyhow::Result<()> {
 			println!("  {} ({})", l.id, l.addr);
 		}
 	}
+	Ok(())
+}
+
+fn elect_cmd(datadir: &Path) -> anyhow::Result<()> {
+	let cfg = raftnode::NodeConfig::load(&raftnode::NodeConfig::conf_path(datadir))?;
+	let raft_dir = cfg.data_dir.join("raft");
+	let log_store = crate::logstore::LogStore::open(&raft_dir)
+		.map_err(|e| anyhow::anyhow!("log store: {e:?}"))?;
+	let uid = unsafe { libc::geteuid() };
+	let gid = unsafe { libc::getegid() };
+	let fsm = std::sync::Arc::new(std::sync::Mutex::new(crate::fsm::Fsm::new(uid, gid)));
+	let sm_store = crate::smstore::SmStore::new(fsm, &raft_dir);
+	let config = std::sync::Arc::new(
+		openraft::Config {
+			cluster_name: "raftfs".to_string(),
+			heartbeat_interval: 500,
+			election_timeout_min: 1500,
+			election_timeout_max: 3000,
+			snapshot_policy: openraft::SnapshotPolicy::Never,
+			..Default::default()
+		}
+		.validate()
+		.map_err(|e| anyhow::anyhow!("config: {e}"))?,
+	);
+	let rt = tokio::runtime::Builder::new_multi_thread()
+		.enable_all()
+		.build()?;
+	rt.block_on(async move {
+		let raft = crate::raft::Raft::new(
+			cfg.id,
+			config,
+			crate::net::NetFactory,
+			log_store,
+			sm_store,
+		)
+		.await
+		.map_err(|e| anyhow::anyhow!("raft init: {e:?}"))?;
+		raft.trigger().elect()
+			.await
+			.map_err(|e| anyhow::anyhow!("elect: {e:?}"))?;
+		eprintln!("raftfs: election triggered on node {}", cfg.id);
+		tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+		let m = raft.metrics().borrow().clone();
+		eprintln!(
+			"raftfs: node {} state={:?} leader={:?}",
+			cfg.id, m.state, m.current_leader
+		);
+		Ok::<(), anyhow::Error>(())
+	})?;
 	Ok(())
 }
