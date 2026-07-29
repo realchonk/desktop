@@ -621,14 +621,9 @@ impl Filesystem for Frontend {
 		if let Some(a) = target {
 			if a.kind == Kind::Directory {
 				let has_marker = self.dir_has_marker(a.ino);
-				let unlocked = self.keys.lock().unwrap().contains_key(&a.ino);
-				if has_marker && unlocked {
-					// Re-lock: drop the key from memory.
-					self.keys.lock().unwrap().remove(&a.ino);
-					return reply.ok();
-				}
-				if has_marker && !unlocked {
-					// Locked: permanently delete everything inside, then the dir.
+				if has_marker {
+					// Encrypted directory: clear all contents (marker + files),
+					// then rmdir.
 					let children: Vec<Vec<u8>> = {
 						let g = self.fsm.lock().unwrap();
 						g.read_dir(a.ino).map(|(_, entries)| entries.into_iter().map(|(n, _, _)| n).collect()).unwrap_or_default()
@@ -640,12 +635,10 @@ impl Filesystem for Frontend {
 							Err(e) => return reply.error(to_errno(e)),
 						}
 					}
+					self.keys.lock().unwrap().remove(&a.ino);
 					let ctx = Ctx { now: SystemTime::now(), uid: req.uid(), gid: req.gid() };
 					match self.raft_write(Cmd::Rmdir { parent: parent.0, name: nb.to_vec() }, ctx) {
-						Ok(()) => {
-							self.keys.lock().unwrap().remove(&a.ino);
-							return reply.ok();
-						}
+						Ok(()) => return reply.ok(),
 						Err(e) => return reply.error(to_errno(e)),
 					}
 				}
@@ -684,6 +677,20 @@ impl Filesystem for Frontend {
 	fn setattr(&self, req: &Request, ino: INodeNo, mode: Option<u32>, uid: Option<u32>, gid: Option<u32>, size: Option<u64>, atime: Option<TimeOrNow>, mtime: Option<TimeOrNow>, _ctime: Option<SystemTime>, _fh: Option<FileHandle>, _crtime: Option<SystemTime>, _chgtime: Option<SystemTime>, _bkuptime: Option<SystemTime>, _flags: Option<BsdFileFlags>, reply: ReplyAttr) {
 		if is_virt(ino.0) {
 			return reply.attr(&TTL, &virt_fileattr(ino.0));
+		}
+		// chmod 0 on an unlocked encrypted directory → re-lock.
+		if let Some(m) = mode {
+			if m & 0o7777 == 0 {
+				let has_marker = self.dir_has_marker(ino.0);
+				let unlocked = self.keys.lock().unwrap().contains_key(&ino.0);
+				if has_marker && unlocked {
+					self.keys.lock().unwrap().remove(&ino.0);
+					match self.fsm.lock().unwrap().attr(ino.0) {
+						Some(a) => return reply.attr(&TTL, &to_fileattr(&a)),
+						None => return reply.error(Errno::ENOENT),
+					}
+				}
+			}
 		}
 		let ctx = Self::ctx_from(req);
 		let cmd = Cmd::SetAttr { ino: ino.0, mode, uid, gid, size, atime: atime.map(to_time), mtime: mtime.map(to_time) };
