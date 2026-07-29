@@ -72,21 +72,27 @@ impl Frontend {
 		rx.recv().expect("raft task died")
 	}
 
-	/// Submit a command through Raft (leader commits + replicates). Blocks the FUSE thread.
+	/// Submit a command through Raft. If this node is not the leader, the
+	/// command is forwarded automatically. Blocks the FUSE thread.
 	fn raft_write(&self, cmd: Cmd, ctx: Ctx) -> Result<(), Error> {
 		let raft = self.raft.clone();
-		trace(format!("raft_write: spawn {:?}", cmd.name()));
-		let r = self.spawn_recv(async move {
-			match raft.client_write(RaftEntryData { cmd, ctx }).await {
-				Ok(resp) => resp.data,
-				Err(e) => {
-					eprintln!("raftfs: client_write failed: {e:?}");
-					Err(Error::Io)
-				}
+		self.spawn_recv(async move { raft_write_inline(&raft, cmd, ctx).await })
+	}
+
+	/// Look up a name, retrying briefly (for forwarded writes that haven't
+	/// replicated to the local FSM yet).
+	fn wait_lookup(&self, parent: u64, name: &[u8]) -> Option<Attr> {
+		for _ in 0..30 {
+			let found = {
+				let g = self.fsm.lock().unwrap();
+				g.lookup(parent, name).and_then(|i| g.attr(i))
+			};
+			if found.is_some() {
+				return found;
 			}
-		});
-		trace(format!("raft_write: recv -> {:?}", r));
-		r
+			std::thread::sleep(std::time::Duration::from_millis(25));
+		}
+		None
 	}
 
 	// ---- per-directory encryption helpers ----
@@ -278,12 +284,29 @@ async fn do_write(
 }
 
 async fn raft_write_inline(raft: &RaftHandle, cmd: Cmd, ctx: Ctx) -> Result<(), Error> {
-	match raft.client_write(RaftEntryData { cmd, ctx }).await {
-		Ok(resp) => resp.data,
-		Err(e) => {
-			eprintln!("raftfs: client_write failed: {e:?}");
-			Err(Error::Io)
+	let m = raft.metrics().borrow().clone();
+	let entry = RaftEntryData { cmd, ctx };
+	if m.current_leader == Some(m.id) {
+		match raft.client_write(entry).await {
+			Ok(resp) => resp.data,
+			Err(e) => {
+				eprintln!("raftfs: client_write failed: {e:?}");
+				Err(Error::Io)
+			}
 		}
+	} else {
+		let leader_id = m.current_leader.ok_or(Error::Io)?;
+		let addr = m.membership_config
+			.membership()
+			.get_node(&leader_id)
+			.map(|n| n.addr.clone())
+			.ok_or(Error::Io)?;
+		net::forward_cmd(&addr, entry)
+			.await
+			.map_err(|e| {
+				eprintln!("raftfs: forward to leader failed: {e}");
+				Error::Io
+			})?
 	}
 }
 
@@ -529,15 +552,9 @@ impl Filesystem for Frontend {
 		let ctx = Self::ctx_from(req);
 		let cmd = Cmd::Create { parent: parent.0, name: nb.to_vec(), perm: (mode & 0o7777) as u16 };
 		match self.raft_write(cmd, ctx) {
-			Ok(()) => {
-				let found = {
-					let g = self.fsm.lock().unwrap();
-					g.lookup(parent.0, nb).and_then(|i| g.attr(i))
-				};
-				match found {
-					Some(a) => reply.created(&TTL, &to_fileattr(&a), Generation(0), FileHandle(0), FopenFlags::empty()),
-					None => reply.error(Errno::EIO),
-				}
+			Ok(()) => match self.wait_lookup(parent.0, nb) {
+				Some(a) => reply.created(&TTL, &to_fileattr(&a), Generation(0), FileHandle(0), FopenFlags::empty()),
+				None => reply.error(Errno::EIO),
 			}
 			Err(e) => reply.error(to_errno(e)),
 		}
@@ -547,12 +564,9 @@ impl Filesystem for Frontend {
 		let ctx = Self::ctx_from(req);
 		let cmd = Cmd::MkDir { parent: parent.0, name: name.as_bytes().to_vec(), perm: (mode & 0o7777) as u16 };
 		match self.raft_write(cmd, ctx) {
-			Ok(()) => {
-				let found = { let g = self.fsm.lock().unwrap(); g.lookup(parent.0, name.as_bytes()).and_then(|i| g.attr(i)) };
-				match found {
-					Some(a) => reply.entry(&TTL, &to_fileattr(&a), Generation(0)),
-					None => reply.error(Errno::EIO),
-				}
+			Ok(()) => match self.wait_lookup(parent.0, name.as_bytes()) {
+				Some(a) => reply.entry(&TTL, &to_fileattr(&a), Generation(0)),
+				None => reply.error(Errno::EIO),
 			}
 			Err(e) => reply.error(to_errno(e)),
 		}
@@ -562,12 +576,9 @@ impl Filesystem for Frontend {
 		let ctx = Self::ctx_from(req);
 		let cmd = Cmd::Symlink { parent: parent.0, name: link_name.as_bytes().to_vec(), target: target.as_os_str().as_bytes().to_vec() };
 		match self.raft_write(cmd, ctx) {
-			Ok(()) => {
-				let found = { let g = self.fsm.lock().unwrap(); g.lookup(parent.0, link_name.as_bytes()).and_then(|i| g.attr(i)) };
-				match found {
-					Some(a) => reply.entry(&TTL, &to_fileattr(&a), Generation(0)),
-					None => reply.error(Errno::EIO),
-				}
+			Ok(()) => match self.wait_lookup(parent.0, link_name.as_bytes()) {
+				Some(a) => reply.entry(&TTL, &to_fileattr(&a), Generation(0)),
+				None => reply.error(Errno::EIO),
 			}
 			Err(e) => reply.error(to_errno(e)),
 		}
