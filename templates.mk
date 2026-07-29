@@ -79,7 +79,7 @@ install: install-extra
 
 .SUBDIRS: src
 
-SRC != find src -name '*.rs' -type f -printf '%p '
+SRC != find src -name '*.rs' -type f | tr '\n' ' '
 
 .DEFAULT: all
 
