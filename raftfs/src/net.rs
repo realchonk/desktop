@@ -47,6 +47,7 @@ enum Wire {
 	Join { id: crate::raft::NodeId, addr: String },
 	Promote { id: crate::raft::NodeId },
 	Status,
+	Elect,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -191,6 +192,10 @@ async fn handle_conn(stream: &mut TcpStream, raft: &RaftHandle, disk: &DiskStore
 			let status = build_status(&m);
 			Some(bincode::serialize(&status).unwrap())
 		}
+		Wire::Elect => {
+			let r = raft.trigger().elect().await.map(|_| ()).map_err(|e| format!("{e:?}"));
+			Some(bincode::serialize(&r).unwrap())
+		}
 	};
 	if let Some(b) = resp_bytes {
 		write_frame(stream, &b).await?;
@@ -256,6 +261,17 @@ pub async fn status_query(addr: &str) -> std::io::Result<ClusterStatus> {
 	write_frame(&mut s, &req).await?;
 	let resp = read_frame(&mut s).await?;
 	bincode::deserialize::<ClusterStatus>(&resp).map_err(ioerr)
+}
+
+/// Tell a running node to trigger a leader election.
+pub async fn elect_node(addr: &str) -> std::io::Result<()> {
+	let mut s = TcpStream::connect(addr).await?;
+	let req = bincode::serialize(&Wire::Elect).map_err(ioerr)?;
+	write_frame(&mut s, &req).await?;
+	let resp = read_frame(&mut s).await?;
+	bincode::deserialize::<Result<(), String>>(&resp)
+		.map_err(ioerr)?
+		.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
 }
 
 fn build_status(m: &openraft::RaftMetrics<crate::raft::NodeId, BasicNode>) -> ClusterStatus {
