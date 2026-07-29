@@ -2,7 +2,12 @@ OS != uname
 HOME != echo $$HOME
 VERSION = "benni-0.1"
 
-# Directories
+# FEATURE FLAGS
+
+## Enable graphical programs
+ENABLE_X11 ?= true
+
+# DIRECTORIES
 
 ## Top-level installation directory
 PREFIX ?= /usr/local
@@ -28,7 +33,7 @@ DATADIR ?= ${PREFIX}/share/desktop
 ## User configuration files directory
 USERCONFDIR ?= ${HOME}
 
-# Compilation Settings
+# COMPILATION SETTINGS
 
 ## C Compiler
 CC ?= cc
@@ -51,7 +56,7 @@ RUSTFLAGS +=
 ## Extra flags passed to `cargo build` for Rust components (e.g. --no-default-features --features block-leader-local)
 CARGO_BUILD_FLAGS ?=
 
-# Other settings
+# OTHER SETTINGS
 
 ## Default Terminal
 TERM = st
@@ -77,6 +82,7 @@ RUST_PROFILE = release
 -include config.mk.local
 
 .EXPORTS: PREFIX CONFDIR BINPREFIX MANPREFIX SCRIPTSDIR GAMESDIR DATADIR USERCONFDIR
+.EXPORTS: ENABLE_X11
 .EXPORTS: CC CPPFLAGS CFLAGS LDFLAGS CARGO RUSTFLAGS CARGO_BUILD_FLAGS
 .EXPORTS: TERM FONT FONT_SIZE_TOPBAR FONT_SIZE_TERM
 .EXPORTS: RUST_PROFILE

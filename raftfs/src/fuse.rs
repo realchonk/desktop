@@ -102,9 +102,9 @@ impl Frontend {
 		self.fsm.lock().unwrap().lookup(dir_ino, ENC_MARKER).is_some()
 	}
 
-	/// Is this directory a direct child of root?
+	/// Is this directory a direct child of root (but not root itself)?
 	fn is_top_level(&self, dir_ino: u64) -> bool {
-		self.fsm.lock().unwrap().parent_of(dir_ino) == Some(1)
+		dir_ino != 1 && self.fsm.lock().unwrap().parent_of(dir_ino) == Some(1)
 	}
 
 	/// Effective encryption key for a file: walk the parent chain looking for an

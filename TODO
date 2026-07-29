@@ -1,3 +1,6 @@
+# Build System
+- optional component (e.g. ENABLE_X11=false)
+
 # Import
 - password management tool (using age)
 - bmk (preferably rewrite in Rust)
