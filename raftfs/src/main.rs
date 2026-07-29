@@ -58,6 +58,10 @@ enum Cmd {
 		#[arg(long)]
 		id: crate::raft::NodeId,
 	},
+	/// Show cluster status (leader, voters, learners) by querying a running node.
+	Status {
+		datadir: PathBuf,
+	},
 }
 
 fn main() -> ExitCode {
@@ -101,6 +105,13 @@ fn main() -> ExitCode {
 			Ok(()) => ExitCode::SUCCESS,
 			Err(e) => {
 				eprintln!("raftfs: promote: {e}");
+				ExitCode::FAILURE
+			}
+		},
+		Cmd::Status { datadir } => match status_cmd(&datadir) {
+			Ok(()) => ExitCode::SUCCESS,
+			Err(e) => {
+				eprintln!("raftfs: status: {e}");
 				ExitCode::FAILURE
 			}
 		},
@@ -190,5 +201,42 @@ fn promote_cmd(leader: &str, id: crate::raft::NodeId) -> anyhow::Result<()> {
 		eprintln!("raftfs: promoted node {id} to voter");
 		Ok::<(), anyhow::Error>(())
 	})?;
+	Ok(())
+}
+
+fn status_cmd(datadir: &Path) -> anyhow::Result<()> {
+	let cfg = raftnode::NodeConfig::load(&raftnode::NodeConfig::conf_path(datadir))?;
+	let addr = cfg.addr.clone();
+	let rt = tokio::runtime::Builder::new_multi_thread()
+		.enable_all()
+		.build()?;
+	let status = rt.block_on(async move {
+		crate::net::status_query(&addr)
+			.await
+			.map_err(|e| anyhow::anyhow!("query {addr}: {e}"))
+	})?;
+	println!("node:    {} ({})", status.id, cfg.addr);
+	println!("state:   {}", status.state);
+	println!("term:    {}", status.term);
+	match &status.leader {
+		Some(l) => println!("leader:  {l}"),
+		None => println!("leader:  (none)"),
+	}
+	match status.last_applied_index {
+		Some(i) => println!("applied: log index {i}"),
+		None => println!("applied: (none)"),
+	}
+	if !status.voters.is_empty() {
+		println!("voters:");
+		for v in &status.voters {
+			println!("  {} ({})", v.id, v.addr);
+		}
+	}
+	if !status.learners.is_empty() {
+		println!("learners:");
+		for l in &status.learners {
+			println!("  {} ({})", l.id, l.addr);
+		}
+	}
 	Ok(())
 }

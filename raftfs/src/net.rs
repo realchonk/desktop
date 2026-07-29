@@ -46,6 +46,24 @@ enum Wire {
 	Forward(RaftEntryData),
 	Join { id: crate::raft::NodeId, addr: String },
 	Promote { id: crate::raft::NodeId },
+	Status,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct NodeInfo {
+	pub id: String,
+	pub addr: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ClusterStatus {
+	pub id: String,
+	pub state: String,
+	pub term: u64,
+	pub leader: Option<String>,
+	pub last_applied_index: Option<u64>,
+	pub voters: Vec<NodeInfo>,
+	pub learners: Vec<NodeInfo>,
 }
 
 async fn rpc_raw(addr: &str, wire: &Wire) -> std::io::Result<Vec<u8>> {
@@ -168,6 +186,11 @@ async fn handle_conn(stream: &mut TcpStream, raft: &RaftHandle, disk: &DiskStore
 				.map_err(|e| format!("{e:?}"));
 			Some(bincode::serialize(&r).unwrap())
 		}
+		Wire::Status => {
+			let m = raft.metrics().borrow().clone();
+			let status = build_status(&m);
+			Some(bincode::serialize(&status).unwrap())
+		}
 	};
 	if let Some(b) = resp_bytes {
 		write_frame(stream, &b).await?;
@@ -223,4 +246,38 @@ pub async fn mgmt_promote(addr: &str, id: crate::raft::NodeId) -> std::io::Resul
 	bincode::deserialize::<Result<(), String>>(&resp)
 		.map_err(ioerr)?
 		.map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
+}
+
+/// Query a node for its cluster status.
+pub async fn status_query(addr: &str) -> std::io::Result<ClusterStatus> {
+	let mut s = TcpStream::connect(addr).await?;
+	let req = bincode::serialize(&Wire::Status).map_err(ioerr)?;
+	write_frame(&mut s, &req).await?;
+	let resp = read_frame(&mut s).await?;
+	bincode::deserialize::<ClusterStatus>(&resp).map_err(ioerr)
+}
+
+fn build_status(m: &openraft::RaftMetrics<crate::raft::NodeId, BasicNode>) -> ClusterStatus {
+	let membership = m.membership_config.membership();
+	let voter_ids: std::collections::BTreeSet<crate::raft::NodeId> =
+		membership.get_joint_config().iter().flatten().copied().collect();
+	let mut voters = Vec::new();
+	let mut learners = Vec::new();
+	for (id, node) in membership.nodes() {
+		let info = NodeInfo { id: id.to_string(), addr: node.addr.clone() };
+		if voter_ids.contains(id) {
+			voters.push(info);
+		} else {
+			learners.push(info);
+		}
+	}
+	ClusterStatus {
+		id: m.id.to_string(),
+		state: format!("{:?}", m.state),
+		term: m.current_term,
+		leader: m.current_leader.map(|l| l.to_string()),
+		last_applied_index: m.last_applied.map(|l| l.index),
+		voters,
+		learners,
+	}
 }

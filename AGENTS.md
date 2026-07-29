@@ -15,7 +15,7 @@ Build with **`mk`** (BSD/Plan9 make, `/usr/sbin/mk`). Source files are `Mkfile` 
 - `mk <dir>` — build one component, e.g. `mk dwm`, `mk bedstatus` (mk recurses into subdirs natively; no `-C` needed). Subdir targets work too: `mk dwm/install`, `mk dwm/clean`.
 - `mk clean` — remove build artifacts
 
-When you build, also install: run `sudo mk install` after a successful `mk` (or `sudo mk <dir>/install` for a single component). The user expects installed binaries to track the source tree after each change.
+When you build, also install: run `sudo mk -o obj install` after a successful `mk -o obj` (or `sudo mk -o obj <dir>/install` for a single component). Always pass **`-o obj`** so build artifacts land in `obj/` instead of polluting the source tree.
 
 By default `mk` builds **optimized**: C with `-O2`, Rust with `cargo build --release` (the `--release` is appended to `CARGO_BUILD_FLAGS` in `config.mk`). For test/debuggable builds, pass **`mk DEBUG=1 ...`** — C gets `-g -O0` (debug symbols, no optimization) and Rust builds in cargo's dev profile (no `--release`); the rust template forwards `${CARGO_BUILD_FLAGS}` either way. A command-line `CARGO_BUILD_FLAGS=...` override still keeps the `--release` (mk's `+=` appends to it), so feature-selection builds stay optimized unless you also pass `DEBUG=1`.
 
