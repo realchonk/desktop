@@ -155,9 +155,13 @@ pub async fn spawn_server(raft: RaftHandle, disk: std::sync::Arc<DiskStore>, add
 }
 
 async fn handle_conn(stream: &mut TcpStream, raft: &RaftHandle, disk: &DiskStore) -> std::io::Result<()> {
-	let req = read_frame(stream).await?;
-	let wire: Wire = bincode::deserialize(&req).map_err(ioerr)?;
-	let resp_bytes: Option<Vec<u8>> = match wire {
+	loop {
+		let req = match read_frame(stream).await {
+			Ok(data) => data,
+			Err(_) => break,
+		};
+		let wire: Wire = bincode::deserialize(&req).map_err(ioerr)?;
+		let resp_bytes: Option<Vec<u8>> = match wire {
 		Wire::Append(r) => raft.append_entries(r).await.ok().map(|x| bincode::serialize(&x).unwrap()),
 		Wire::Vote(r) => raft.vote(r).await.ok().map(|x| bincode::serialize(&x).unwrap()),
 		Wire::Snap(r) => raft.install_snapshot(r).await.ok().map(|x| bincode::serialize(&x).unwrap()),
@@ -197,19 +201,24 @@ async fn handle_conn(stream: &mut TcpStream, raft: &RaftHandle, disk: &DiskStore
 			Some(bincode::serialize(&r).unwrap())
 		}
 	};
-	if let Some(b) = resp_bytes {
-		write_frame(stream, &b).await?;
+		if let Some(b) = resp_bytes {
+			write_frame(stream, &b).await?;
+		}
 	}
 	Ok(())
 }
 
-/// Push a block to a peer; returns Ok once the peer ACKed it stored.
-pub async fn block_put(addr: &str, bytes: Vec<u8>) -> std::io::Result<()> {
+/// Push multiple blocks to a peer over a single TCP connection.
+pub async fn block_put_batch(addr: &str, blocks: &[(Hash, Vec<u8>)]) -> std::io::Result<()> {
+	if blocks.is_empty() {
+		return Ok(());
+	}
 	let mut s = TcpStream::connect(addr).await?;
-	let req = bincode::serialize(&Wire::BlockPut(bytes)).map_err(ioerr)?;
-	write_frame(&mut s, &req).await?;
-	let resp = read_frame(&mut s).await?;
-	bincode::deserialize::<()>(&resp).map_err(ioerr)?;
+	for (_h, b) in blocks {
+		let req = bincode::serialize(&Wire::BlockPut(b.clone())).map_err(ioerr)?;
+		write_frame(&mut s, &req).await?;
+		let _resp = read_frame(&mut s).await?;
+	}
 	Ok(())
 }
 

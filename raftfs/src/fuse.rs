@@ -182,14 +182,15 @@ async fn replicate_blocks(
 	id: crate::raft::NodeId,
 	blocks: &[(Hash, Vec<u8>)],
 ) -> Result<(), Error> {
+	if blocks.is_empty() {
+		return Ok(());
+	}
 	let peers = peer_addrs(raft, id).await;
 	if peers.is_empty() {
 		return Ok(());
 	}
 	for peer in &peers {
-		for (_h, b) in blocks {
-			net::block_put(peer, b.clone()).await.map_err(|_| Error::Io)?;
-		}
+		net::block_put_batch(peer, blocks).await.map_err(|_| Error::Io)?;
 	}
 	Ok(())
 }
@@ -204,88 +205,111 @@ async fn lazy_fetch(disk: &DiskStore, raft: &RaftHandle, id: crate::raft::NodeId
 	None
 }
 
-async fn materialize(
+async fn read_block(
 	disk: &DiskStore,
 	raft: &RaftHandle,
 	id: crate::raft::NodeId,
 	ino: u64,
 	enc: Option<crate::crypto::DirKey>,
-	data: &FileData,
-	size: usize,
+	hash: Hash,
 ) -> Vec<u8> {
-	match data {
-		FileData::Inline(b) => {
-			let mut v = b.clone();
-			v.resize(size, 0);
-			v
-		}
-		FileData::Extents(map) => {
-			let mut v = vec![0u8; size];
-			for (off, e) in map {
-				let raw = match disk.get(e.block) {
-					Some(b) => b,
-					None => lazy_fetch(disk, raft, id, e.block).await.unwrap_or_default(),
-				};
-				let bytes = match enc {
-					Some(k) => {
-						let fk = crate::crypto::derive_file_key(&k, ino);
-						crate::crypto::decrypt_block(&raw, &fk).unwrap_or_default()
-					}
-					None => raw,
-				};
-				let start = *off as usize;
-				if start < size {
-					let take = bytes.len().min(size - start);
-					v[start..start + take].copy_from_slice(&bytes[..take]);
-				}
-			}
-			v
-		}
+	let raw = match disk.get(hash) {
+		Some(b) => b,
+		None => lazy_fetch(disk, raft, id, hash).await.unwrap_or_default(),
+	};
+	match enc {
+		Some(k) => crate::crypto::decrypt_block(&raw, &crate::crypto::derive_file_key(&k, ino)).unwrap_or_default(),
+		None => raw,
 	}
 }
 
-async fn do_write(
-	raft: RaftHandle,
-	fsm: Arc<Mutex<Fsm>>,
-	disk: Arc<DiskStore>,
-	id: crate::raft::NodeId,
-	ino: u64,
-	offset: u64,
-	data: Vec<u8>,
-	ctx: Ctx,
-	enc: Option<crate::crypto::DirKey>,
-) -> Result<u32, Error> {
-	let n = data.len() as u32;
-	let new_end = offset + data.len() as u64;
-	let (cur_data, cur_size) = fsm.lock().unwrap().file_data(ino).ok_or(Error::NoEntry)?;
+fn encrypt_for_store(plain: &[u8], enc: Option<crate::crypto::DirKey>, ino: u64) -> Vec<u8> {
+	match enc {
+		Some(k) => crate::crypto::encrypt_block(plain, &crate::crypto::derive_file_key(&k, ino)),
+		None => plain.to_vec(),
+	}
+}
+
+	async fn do_write(
+		raft: RaftHandle,
+		fsm: Arc<Mutex<Fsm>>,
+		disk: Arc<DiskStore>,
+		id: crate::raft::NodeId,
+		ino: u64,
+		offset: u64,
+		data: Vec<u8>,
+		ctx: Ctx,
+		enc: Option<crate::crypto::DirKey>,
+	) -> Result<u32, Error> {
+		let n = data.len() as u32;
+		let new_end = offset + data.len() as u64;
+		let (cur_data, cur_size) = fsm.lock().unwrap().file_data(ino).ok_or(Error::NoEntry)?;
 	let stays_inline =
 		enc.is_none() && matches!(cur_data, FileData::Inline(_)) && new_end <= INLINE_THRESHOLD as u64;
 	if stays_inline {
 		let cmd = Cmd::WriteInline { ino, offset, data };
 		raft_write_inline(&raft, cmd, ctx).await?;
 	} else {
-		let mut buf = materialize(&disk, &raft, id, ino, enc, &cur_data, cur_size as usize).await;
-		let start = offset as usize;
-		let end = start + data.len();
-		if end > buf.len() {
-			buf.resize(end, 0);
-		}
-		buf[start..end].copy_from_slice(&data);
-		let mut new_blocks: Vec<(Hash, Vec<u8>)> = Vec::new();
-		let mut extents: Vec<Extent> = Vec::new();
-		let mut off = 0u64;
-		for chunk in buf.chunks(INLINE_THRESHOLD) {
-			let stored: Vec<u8> = match enc {
-				Some(k) => crate::crypto::encrypt_block(chunk, &crate::crypto::derive_file_key(&k, ino)),
-				None => chunk.to_vec(),
+		let bs = INLINE_THRESHOLD as u64;
+		let mut extents: std::collections::BTreeMap<u64, Extent> = match &cur_data {
+			FileData::Inline(b) => {
+				let mut map = std::collections::BTreeMap::new();
+				let mut off = 0u64;
+				for chunk in b.chunks(INLINE_THRESHOLD) {
+					let stored = encrypt_for_store(chunk, enc, ino);
+					let h = disk.put(&stored);
+					map.insert(off, Extent { off, len: chunk.len() as u64, block: h });
+					off += chunk.len() as u64;
+				}
+				map
+			}
+			FileData::Extents(m) => m.clone(),
+		};
+		let first_block = offset / bs;
+		let last_block = (new_end - 1) / bs;
+		let mut changed: Vec<(Hash, Vec<u8>)> = Vec::new();
+		for block_idx in first_block..=last_block {
+			let block_off = block_idx * bs;
+			let overlap_start = offset.max(block_off);
+			let overlap_end = new_end.min(block_off + bs);
+			let data_start = (overlap_start - offset) as usize;
+			let data_end = (overlap_end - offset) as usize;
+			let block_pos = (overlap_start - block_off) as usize;
+			let is_full = overlap_start == block_off && overlap_end >= block_off + bs;
+			let mut content = if is_full {
+				data[data_start..data_end].to_vec()
+			} else {
+				let existing = extents.get(&block_off)
+					.map(|e| e.block)
+					.map(|h| {
+						let raw = disk.get(h).unwrap_or_default();
+						match enc {
+							Some(k) => crate::crypto::decrypt_block(&raw, &crate::crypto::derive_file_key(&k, ino)).unwrap_or_default(),
+							None => raw,
+						}
+					})
+					.unwrap_or_default();
+				let mut v = existing;
+				let needed = block_pos + (data_end - data_start);
+				if v.len() < needed {
+					v.resize(needed, 0);
+				}
+				v[block_pos..block_pos + (data_end - data_start)].copy_from_slice(&data[data_start..data_end]);
+				v
 			};
+			let _ = &mut content;
+			let stored = encrypt_for_store(&content, enc, ino);
 			let h = disk.put(&stored);
-			new_blocks.push((h, stored.clone()));
-			extents.push(Extent { off, len: chunk.len() as u64, block: h });
-			off += chunk.len() as u64;
+			let old = extents.get(&block_off).map(|e| e.block);
+			if old != Some(h) {
+				changed.push((h, stored));
+			}
+			extents.insert(block_off, Extent { off: block_off, len: content.len() as u64, block: h });
 		}
-		replicate_blocks(&raft, id, &new_blocks).await?;
-		let cmd = Cmd::WriteMeta { ino, extents, size: buf.len() as u64 };
+		replicate_blocks(&raft, id, &changed).await?;
+		let extent_vec: Vec<Extent> = extents.into_values().collect();
+		let new_size = cur_size.max(new_end);
+		let cmd = Cmd::WriteMeta { ino, extents: extent_vec, size: new_size };
 		raft_write_inline(&raft, cmd, ctx).await?;
 	}
 	Ok(n)
@@ -486,19 +510,30 @@ impl Filesystem for Frontend {
 			Some(x) => x,
 			None => return reply.error(Errno::ENOENT),
 		};
-		let id = self.id;
 		let buf = match &data {
 			FileData::Inline(b) => {
 				let mut v = b.clone();
 				v.resize(fsize as usize, 0);
 				v
 			}
-			FileData::Extents(_) => {
+			FileData::Extents(map) => {
 				let disk = self.disk.clone();
 				let raft = self.raft.clone();
+				let id = self.id;
 				let enc = self.effective_file_key(ino.0);
-				let data2 = data.clone();
-				self.spawn_recv(async move { materialize(&disk, &raft, id, ino.0, enc, &data2, fsize as usize).await })
+				let map2 = map.clone();
+				self.spawn_recv(async move {
+					let mut v = vec![0u8; fsize as usize];
+					for (off, e) in &map2 {
+						let bytes = read_block(&disk, &raft, id, ino.0, enc, e.block).await;
+						let start = *off as usize;
+						if start < v.len() {
+							let take = bytes.len().min(v.len() - start);
+							v[start..start + take].copy_from_slice(&bytes[..take]);
+						}
+					}
+					v
+				})
 			}
 		};
 		let len = buf.len();
