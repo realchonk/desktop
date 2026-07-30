@@ -100,6 +100,21 @@ pub async fn setup(cfg: &NodeConfig) -> Result<(RaftHandle, Arc<Mutex<Fsm>>, Arc
 
 	spawn_server(raft.clone(), disk.clone(), cfg.addr.clone()).await?;
 
+	// After settling, try to become leader (avoids write-forwarding latency).
+	let raft_for_elect = raft.clone();
+	let elect_delay = {
+		let mut hasher = std::collections::hash_map::DefaultHasher::new();
+		std::hash::Hash::hash(&cfg.id, &mut hasher);
+		3 + (std::hash::Hasher::finish(&hasher) % 3)
+	};
+	tokio::spawn(async move {
+		tokio::time::sleep(Duration::from_secs(elect_delay)).await;
+		let m = raft_for_elect.metrics().borrow().clone();
+		if m.state != openraft::ServerState::Leader {
+			let _ = raft_for_elect.trigger().elect().await;
+		}
+	});
+
 	Ok((raft, fsm, disk))
 }
 

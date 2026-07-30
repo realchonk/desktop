@@ -82,7 +82,7 @@ impl Frontend {
 	/// Look up a name, retrying briefly (for forwarded writes that haven't
 	/// replicated to the local FSM yet).
 	fn wait_lookup(&self, parent: u64, name: &[u8]) -> Option<Attr> {
-		for _ in 0..30 {
+		for _ in 0..500 {
 			let found = {
 				let g = self.fsm.lock().unwrap();
 				g.lookup(parent, name).and_then(|i| g.attr(i))
@@ -90,7 +90,7 @@ impl Frontend {
 			if found.is_some() {
 				return found;
 			}
-			std::thread::sleep(std::time::Duration::from_millis(25));
+			std::thread::sleep(std::time::Duration::from_millis(2));
 		}
 		None
 	}
