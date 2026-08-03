@@ -1,5 +1,11 @@
 #!/bin/sh
 
+libs() {
+	find . -name 'Mkfile' -exec grep -o '`pkg-config[^`]*`' {} \;				\
+		| sed 's/^`pkg-config\([[:space:]]*--[^[:space:]]*\)*[[:space:]]*//; s/`$//'	\
+		| tr ' ' '\n' | sort | uniq
+}
+
 depends_common='
 bat
 cargo?
@@ -65,9 +71,16 @@ for string in ${depends_common} ${depends_os}; do
 	variants=$(echo "$variants" | sed 's/|/ or /')
 
 	if "$optional"; then
-		printf 'missing optional dependency: %s\n' "$variants"
+		printf 'missing optional program: %s\n' "$variants"
 	else
-		printf 'missing required dependency: %s\n' "$variants"
+		printf 'missing required program: %s\n' "$variants"
+		rc=$((rc + 1))
+	fi
+done
+
+for lib in $(libs); do
+	if ! pkg-config "$lib" >/dev/null 2>&1; then
+		printf 'missing required library: %s\n' "$lib"
 		rc=$((rc + 1))
 	fi
 done
