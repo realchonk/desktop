@@ -112,8 +112,8 @@ gls() {
 }
 
 _gu_do() {
-	got fe -qb "$1"
-	got up -qb "origin/$1"
+	got fe -qb "$1" || return
+	got up -qb "origin/$1" || return
 	got rb "$1"
 }
 
