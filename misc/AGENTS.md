@@ -76,7 +76,7 @@ The editor uses `timeout(-1)` internally; the running loop resets `timeout(1000)
 
 ## Signals
 
-`SIGINT`, `SIGTERM`, and `SIGUSR1` are caught via `sigaction` (no `SA_RESTART`). `on_sig` routes by signo: SIGINT/SIGTERM set `got_signal` (polled at the top of each loop → exit); SIGUSR1 sets a separate `stop_session` flag. In `run_session`, `stop_session` triggers a final flush + lock removal and returns to the session list (the process stays alive). `stop_session` is cleared in the picker and session-list loops, so a SIGUSR1 received with no session active is a no-op.
+`SIGINT`, `SIGTERM`, and `SIGUSR1` are caught via `sigaction` (no `SA_RESTART`). `on_sig` routes by signo: SIGINT/SIGTERM set `got_signal` (polled at the top of each loop → exit); SIGUSR1 sets a separate `stop_session` flag and rings the terminal bell by `write(STDOUT_FILENO, "\a", 1)` straight from the handler (async-signal-safe; `errno` is saved/restored around it, ncurses' `beep()` is deliberately **not** used since it isn't signal-safe and may emit a visual bell instead). The bell fires on every SIGUSR1, including when no session is active. In `run_session`, `stop_session` triggers a final flush + lock removal and returns to the session list (the process stays alive). `stop_session` is cleared in the picker and session-list loops, so a SIGUSR1 received with no session active is a no-op.
 
 The desktop `lock` script sends `SIGUSR1` via `pkill -USR1 -x wt` immediately before locking, so an active session is recorded up to the lock moment.
 

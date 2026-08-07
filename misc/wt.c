@@ -65,10 +65,14 @@ static volatile sig_atomic_t stop_session = 0;
 static void
 on_sig(int signo)
 {
-	if (signo == SIGUSR1)
+	if (signo == SIGUSR1) {
+		int save_errno = errno;
 		stop_session = 1;
-	else
+		(void)!write(STDOUT_FILENO, "\a", 1);
+		errno = save_errno;
+	} else {
 		got_signal = 1;
+	}
 }
 
 static void *

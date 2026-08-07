@@ -195,12 +195,15 @@ between its BAT and TMR sections while the lock is held.
 .It Dv SIGINT , Dv SIGTERM
 End any active session, record it, remove the lock file, and exit.
 .It Dv SIGUSR1
-End the active session
+Ring the terminal bell
+.Pq write Ql \e a
+and end the active session
 .Pq if one is running ,
 record it, remove the lock file, and return to the session list without
 exiting.
 The desktop lock script sends this so work time is captured when the screen
-locks; it is ignored when no session is active.
+locks; the session handling is a no-op when no session is active, but the bell
+is always rung.
 .El
 .Sh EXIT STATUS
 .Ex -std
