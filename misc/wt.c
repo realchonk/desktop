@@ -357,6 +357,29 @@ date_to_time(const char *s)
 	return mktime(&tm);
 }
 
+static time_t
+make_start_ts(const char *date, const char *hhmm)
+{
+	struct tm tm;
+	int y, m, d, H, M;
+
+	if (sscanf(date, "%d-%d-%d", &y, &m, &d) != 3)
+		return (time_t)-1;
+	if (sscanf(hhmm, "%d:%d", &H, &M) != 2)
+		return (time_t)-1;
+	if (H < 0 || H > 23 || M < 0 || M > 59)
+		return (time_t)-1;
+	memset(&tm, 0, sizeof(tm));
+	tm.tm_year = y - 1900;
+	tm.tm_mon = m - 1;
+	tm.tm_mday = d;
+	tm.tm_hour = H;
+	tm.tm_min = M;
+	tm.tm_sec = 0;
+	tm.tm_isdst = -1;
+	return mktime(&tm);
+}
+
 static void
 elapsed_str(long sec, char *buf, size_t n)
 {
@@ -998,7 +1021,7 @@ draw_running(struct ctx *ctx, long elapsed)
 
 	draw_summary(ctx, rows / 3 + 6);
 
-	mvprintw(rows - 3, 0, "[Space] stop  [e] edit description  [c] cancel");
+	mvprintw(rows - 3, 0, "[Space] stop  [e] edit description  [s] set start time  [c] cancel");
 	mvprintw(rows - 2, 0, "[q] refused while running");
 	mvprintw(rows - 1, 0, "[^L] redraw");
 	if (ctx->status[0]) {
@@ -1111,6 +1134,36 @@ run_session(struct ctx *ctx)
 			fill_time(r->end, sizeof(r->end), now);
 			write_csv(ctx);
 			r->end[0] = '\0';
+		} else if (ch == 's') {
+			char buf[TIME_LEN];
+			snprintf(buf, sizeof(buf), "%s", r->start);
+			if (prompt_input("Start time (HH:MM)", buf, sizeof(buf))) {
+				time_t new_ts;
+				int mins;
+
+				trim(buf);
+				new_ts = make_start_ts(r->date, buf);
+				if (new_ts == (time_t)-1) {
+					beep();
+					snprintf(ctx->status, sizeof(ctx->status),
+					    "invalid time (use HH:MM)");
+				} else if (new_ts > now) {
+					beep();
+					snprintf(ctx->status, sizeof(ctx->status),
+					    "start time must be in the past");
+				} else {
+					mins = hm_to_minutes(buf);
+					snprintf(r->start, sizeof(r->start),
+					    "%02d:%02d", mins / 60, mins % 60);
+					start_ts = new_ts;
+					ctx->start_ts = new_ts;
+					fill_time(r->end, sizeof(r->end), now);
+					write_csv(ctx);
+					r->end[0] = '\0';
+					snprintf(ctx->status, sizeof(ctx->status),
+					    "start set to %s", r->start);
+				}
+			}
 		} else if (ch == 'q' || ch == 27) {
 			beep();
 			snprintf(ctx->status, sizeof(ctx->status),

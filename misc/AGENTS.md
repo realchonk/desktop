@@ -48,6 +48,7 @@ Atomicity comes from the final `rename`. While a session runs, the in-progress r
 3. **Running** — big bold `HH:MM:SS` elapsed, redraws every second. Keys:
    - `Space` — stop and save (empty descriptions are allowed).
    - `e` — edit description (prefilled, see Editor below).
+   - `s` — edit the running session's start time (`HH:MM`, prefilled), to backdate a session started late. Parsed via `make_start_ts(r->date, buf)` (same date, new time; validates `H`/`M` range); a future timestamp is rejected with a beep. On success it rewrites `r->start` (canonical `%02d:%02d`), updates both the local `start_ts` and `ctx->start_ts` (so the live elapsed counter and `compute_summary`'s running-minutes term stay consistent), then flushes the CSV with `end=now` momentarily (same crash-safe pattern as `e`).
    - `c` — cancel session (drops the in-progress row, rewrites file).
    - `q`/Esc — refused with a hint pointing to `Space` / `c`.
    - `^L` — redraw.

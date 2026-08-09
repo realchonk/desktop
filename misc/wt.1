@@ -1,4 +1,4 @@
-.Dd 2026-07-20
+.Dd 2026-08-09
 .Dt WT 1
 .Os
 .Sh NAME
@@ -89,6 +89,14 @@ Stop the session and record it.
 An empty description is allowed; the row is kept as-is.
 .It Sy e
 Edit the description of the running session.
+.It Sy s
+Edit the start time of the running session, e.g. to backdate a session
+you forgot to start.
+The prompt is prefilled with the current
+.Li HH:MM ;
+the date is left unchanged.
+A malformed time, or one that would lie in the future, is rejected with a
+bell and a status message.
 .It Sy c
 Cancel the session: drop the in-progress row and rewrite the CSV.
 .It Sy q Ns | Ns Sy Esc
