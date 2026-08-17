@@ -2,6 +2,7 @@ PROGS =	audioctl		\
 	bidle			\
 	flash			\
 	gurkx			\
+	mount-storage		\
 	pinentry-dmenu2		\
 	slowcat			\
 	themeswitch		\
