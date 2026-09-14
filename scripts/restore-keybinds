@@ -2,3 +2,10 @@
 
 setxkbmap -option caps:none de us
 xmodmap -e 'keycode 66 = Escape'
+
+touchpad=$(xinput list --name-only | grep -i touchpad)
+[ -z "$touchpad" ] && exit 0
+
+xinput set-prop "$touchpad" 'libinput Tapping Enabled' 1
+xinput set-prop "$touchpad" 'libinput Natural Scrolling Enabled' 1
+
